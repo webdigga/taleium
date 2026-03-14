@@ -1,0 +1,63 @@
+:root {
+  /* Palette — rich adventure atlas with cozy warmth */
+  --color-bg: #F7F3ED;
+  --color-bg-hero: #1B2A4A;
+  --color-bg-hero-light: #243660;
+  --color-text: #3A3330;
+  --color-text-on-dark: #E8E2D8;
+  --color-heading: #1B1512;
+  --color-accent: #E2725B;
+  --color-accent-hover: #D4614A;
+  --color-accent-glow: rgba(226, 114, 91, 0.2);
+  --color-secondary: #D4A03C;
+  --color-secondary-light: rgba(212, 160, 60, 0.12);
+  --color-muted: #8A7E72;
+  --color-muted-on-dark: #9BA7BC;
+  --color-border: #DDD5C9;
+  --color-surface: #FFFFFF;
+  --color-surface-warm: #FAF6F0;
+  --color-surface-hover: #F2ECE3;
+
+  /* Reading levels */
+  --color-young-explorer: #E8A835;
+  --color-young-explorer-bg: #FDF6E3;
+  --color-curious-mind: #4A90D9;
+  --color-curious-mind-bg: #EBF2FB;
+  --color-deep-dive: #8B6BBF;
+  --color-deep-dive-bg: #F2EEFA;
+
+  /* Typography */
+  --font-heading: 'Vollkorn', 'Georgia', serif;
+  --font-body: 'DM Sans', 'Helvetica Neue', sans-serif;
+  --font-display: 'Sora', 'DM Sans', sans-serif;
+
+  /* Spacing */
+  --content-width: 720px;
+  --page-width: 1200px;
+  --space-xs: 0.25rem;
+  --space-sm: 0.5rem;
+  --space-md: 1rem;
+  --space-lg: 1.5rem;
+  --space-xl: 2rem;
+  --space-2xl: 3rem;
+  --space-3xl: 4rem;
+  --space-4xl: 6rem;
+
+  /* Borders */
+  --radius-sm: 6px;
+  --radius-md: 10px;
+  --radius-lg: 16px;
+  --radius-xl: 24px;
+  --radius-full: 100px;
+
+  /* Shadows */
+  --shadow-sm: 0 1px 3px rgba(27, 21, 18, 0.06);
+  --shadow-md: 0 4px 16px rgba(27, 21, 18, 0.08);
+  --shadow-lg: 0 12px 40px rgba(27, 21, 18, 0.14);
+  --shadow-glow: 0 0 0 4px var(--color-accent-glow);
+
+  /* Transitions */
+  --transition-fast: 150ms ease;
+  --transition-base: 300ms cubic-bezier(0.4, 0, 0.2, 1);
+  --transition-bounce: 500ms cubic-bezier(0.34, 1.56, 0.64, 1);
+}
