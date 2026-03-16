@@ -6,11 +6,6 @@ main = "src/worker/index.ts"
 [vars]
 # ANTHROPIC_API_KEY set via: wrangler secret put ANTHROPIC_API_KEY
 
-[[kv_namespaces]]
-binding = "ARTICLE_CACHE"
-id = "bf1b6840f5764f91b9ea49b2015e97e8"
-preview_id = "4009bf44b55e4364a5674856e12fd84f"
-
 [[d1_databases]]
 binding = "DB"
 database_name = "taleium-meta"

@@ -2,100 +2,104 @@
 
 ## Overview
 
-Taleium is a full-stack Cloudflare application: a React SPA served from Workers Sites, with a Cloudflare Worker API backend that calls Claude for article generation and Wikimedia Commons for images.
+Taleium is a full-stack Cloudflare application: a React SPA served from Workers Sites, with a Cloudflare Worker API backend. Users create stories chapter by chapter with AI assistance. Auth is email + password with PBKDF2 hashing and HttpOnly session cookies.
 
-## Request Flow: Article Generation
+## Request Flow: Chapter Generation
 
 ```
-User types topic → POST /api/generate
-  → Validate input, generate slug
-  → Check KV cache (hit? return immediately)
-  → Call Claude API (Haiku 4.5, max 5000 tokens)
-  → Parse & validate JSON response
-  → Save article to KV with null images
-  → Save metadata to D1
-  → Return { slug, readingLevel } to client
-  → Background (ctx.waitUntil):
-      → Resolve all images from Wikimedia Commons in parallel
-      → Update KV with resolved images
-      → Update D1 metadata with hero_image_url
+User writes a prompt → POST /api/books/:id/chapters
+  → Validate session (HttpOnly cookie → D1 sessions/users join)
+  → Fetch book + existing chapters from D1
+  → Verify ownership
+  → Build story context (full ch1 + excerpts of middle + full last chapter)
+  → Call Claude API (Haiku 4.5, max 2000 tokens)
+  → Parse JSON response { title, content }
+  → Insert chapter into D1, update book chapter_count
+  → Return { chapter } to client
+```
 
-Client navigates to /:slug/:level
-  → GET /api/article/:slug/:level
-  → Return article from KV (may have null images initially)
-  → If images missing, client auto-refetches after 10 seconds
+### Alternative: Direction-Based Creation
+
+```
+User requests directions → POST /api/books/:id/directions
+  → Same auth + book fetch
+  → Call Claude API with story context
+  → Return { directions: [{ id, summary, preview }] }
+
+User picks a direction → POST /api/books/:id/chapters/from-direction
+  → Combines summary + preview into a prompt
+  → Same flow as chapter generation above
 ```
 
 ## Data Model
 
-### KV Cache (ARTICLE_CACHE)
-- Key: `article:{slug}:{level}`
-- Value: Full `CachedArticle` JSON (article content + resolved images)
-- Purpose: Fast retrieval, full article data
-
 ### D1 Database (taleium-meta)
-- Table: `articles`
-- Purpose: Metadata for browse/search, view counts, category filtering, sitemap
-- Indexed on: slug, category, generated_at
 
-### CachedArticle Structure
+**users** — id (UUID), email (unique), password_hash, salt, display_name, timestamps
+**sessions** — id (UUID, sent as cookie), user_id, created_at, expires_at (30 days)
+**books** — id (UUID), user_id, title, description, age_range, visibility, share_token, cover_image, chapter_count, timestamps
+**chapters** — id (UUID), book_id, chapter_number, title, content, user_prompt, created_at
+
+### Auth Flow
+
 ```
-CachedArticle
-  ├── slug, readingLevel, topic, generatedAt
-  ├── article (GeneratedArticle)
-  │   ├── title, subtitle, summary, category, era
-  │   ├── introduction, conclusion, pullQuote
-  │   ├── sections[] (heading, content, imageQuery, imageCaption)
-  │   ├── timeline[] (date, event)
-  │   ├── furtherReading[]
-  │   ├── vocabulary[] (term, definition)
-  │   ├── didYouKnow[]
-  │   ├── keyFacts[]
-  │   └── comprehension[] (question, options[], correctIndex, explanation)
-  └── images
-      ├── hero (ResolvedImage | null)
-      └── sections[] (ResolvedImage | null)
+Signup/Login → PBKDF2 hash (100k iterations, SHA-256, random 16-byte salt)
+            → Create session row in D1
+            → Set HttpOnly cookie: session=<uuid>
+            → 30-day expiry
+
+Each API request → Read cookie → JOIN sessions+users → verify expires_at > now
 ```
 
-## Reading Levels
+## Age Ranges
 
-| Level | Ages | UK Key Stage | Word Target | Sections |
-|-------|------|-------------|-------------|----------|
-| young-explorer | 6-9 | KS1 | ~600 | 3-4 |
-| curious-mind | 10-13 | KS2-KS3 | ~900 | 4-5 |
-| deep-dive | Adult | GCSE+ | ~1500 | 4-6 |
+| Range | Ages | Word Target | AI Style |
+|-------|------|-------------|----------|
+| 3-5 | 3-5 | 150-250 | Simple vocabulary, short sentences, playful |
+| 6-8 | 6-8 | 250-400 | Clear vocab, adventure tone, dialogue |
+| 9-12 | 9-12 | 400-600 | Rich vocabulary, complex sentences, plot twists |
 
-## Article Page Features
+## Story Context Compression
 
-1. **Reading progress bar** - gradient bar (coral→gold) fixed below header, fills on scroll
-2. **Read time badge** - estimated minutes based on word count / 200 wpm
-3. **Key Facts box** - gold-bordered card before the introduction
-4. **Did You Know boxes** - warm yellow callouts spaced between sections
-5. **Pull Quote** - highlighted quote/fact at article midpoint
-6. **Timeline** - chronological key dates with vertical line
-7. **Vocabulary section** - grid of term/definition cards after conclusion
-8. **Comprehension Quiz** - interactive multiple choice with instant feedback + score
-9. **Read Aloud** - Web Speech API with play/pause/stop, speed control, section tracking
-10. **Read Next** - related articles from same category (existing only)
-11. **Image Credits** - attribution list at bottom
+To keep Claude prompts manageable for long stories:
+- **Full first chapter** — establishes setting, characters, tone
+- **Title + first 100 chars of middle chapters** — maintains continuity
+- **Full last chapter** — provides immediate context for continuation
 
-## Image Resolution (Wikimedia)
+## Visibility Model
 
-- Queries Wikimedia Commons API with `User-Agent` header (required, blocks 403s from CF edge)
+Per-book setting:
+- **private** (default) — only the owner can see
+- **public** — listed on `/browse`, accessible to anyone
+- **link** — accessible via `/shared/:token`, not listed
+
+Share tokens are auto-generated when visibility is set to `link` or `public`.
+
+## Cover Images (Wikimedia)
+
+- Queries Wikimedia Commons API with `User-Agent` header
 - Filters: JPG/PNG only, min 400px wide
 - Fallback: simplifies query to first 3 words if no results
-- All section images + hero resolved in parallel via `Promise.all`
-- Runs in background after article text is saved
+- Runs in background (`ctx.waitUntil`) after book creation
 
 ## Design System
 
 - **Palette:** Warm cream (#F7F3ED) content, dark navy (#1B2A4A) hero/header, coral (#E2725B) accent, gold (#D4A03C) secondary
 - **Fonts:** Vollkorn (heading), DM Sans (body), Sora (display) — loaded from Google Fonts
-- **Reading level colours:** Gold (young-explorer), Blue (curious-mind), Purple (deep-dive)
+- **Age range colours:** Gold (3-5), Blue (6-8), Purple (9-12)
 - **Layout:** Content max 720px, page max 1200px, mobile-first responsive
 
-## Categories
+## Frontend Routes
 
-`history | science | nature | geography | technology | food | health | arts | sport | space | maths | language`
-
-Claude picks the best fit. Category is stored in D1 for filtering/browse, not in URLs.
+| Route | Page | Auth? |
+|-------|------|-------|
+| `/` | Landing (hero + public books) or redirect to Dashboard | No |
+| `/signup` | Sign up form | No |
+| `/login` | Login form | No |
+| `/dashboard` | "My Books" shelf | Yes |
+| `/create` | Create new book | Yes |
+| `/books/:id` | Book workshop (chapters, settings) | Yes (owner) |
+| `/books/:id/new-chapter` | Write prompt or pick direction | Yes (owner) |
+| `/books/:id/read` | Read full story | Yes (owner) |
+| `/shared/:token` | Read shared book | No |
+| `/browse` | Public books grid | No |

@@ -1,52 +1,70 @@
-import type { GeneratedArticle, ReadingLevel } from '../types';
-import { sanitiseClaudeResponse, validateArticleJSON } from '../utils/validate';
+import type { AgeRange, GeneratedChapter, StoryDirection, Chapter } from '../types';
+import { sanitiseClaudeResponse } from '../utils/validate';
 
-const SYSTEM_PROMPT = `You are Taleium, an educational article writer. Create engaging, factually accurate articles tailored to a reading level. Respond with valid JSON only — no markdown, no preamble.`;
+const SYSTEM_PROMPT = `You are Taleium, a collaborative family story creator. You help parents and children write stories together, chapter by chapter. You write engaging, age-appropriate prose. Respond with valid JSON only — no markdown, no preamble.`;
 
-function buildUserPrompt(topic: string, readingLevel: ReadingLevel): string {
-  const levelGuide: Record<ReadingLevel, string> = {
-    'young-explorer': 'Ages 6-9. Simple words, short sentences, fun analogies. ~600 words across 3-4 sections.',
-    'curious-mind': 'Ages 10-13. Some technical terms with inline explanations, narrative style. ~900 words across 4-5 sections.',
-    'deep-dive': 'Adult. Full depth, reference sources, sophisticated vocabulary. ~1500 words across 4-6 sections.',
-  };
+const WORD_TARGETS: Record<AgeRange, string> = {
+  '3-5': '150-250 words. Very simple vocabulary, short sentences, repetition for emphasis. Fun, playful tone.',
+  '6-8': '250-400 words. Clear vocabulary with occasional interesting words. Adventure and wonder. Dialogue encouraged.',
+  '9-12': '400-600 words. Richer vocabulary, more complex sentences. Deeper emotions and themes. Plot twists welcome.',
+};
 
-  return `Write an article about "${topic}" for reading level: ${readingLevel} (${levelGuide[readingLevel]})
+function buildStoryContext(chapters: Chapter[], bookTitle: string): string {
+  if (chapters.length === 0) return 'This is the first chapter of the story.';
+
+  const parts: string[] = [`The story "${bookTitle}" so far:`];
+
+  if (chapters.length === 1) {
+    parts.push(`Chapter 1 "${chapters[0].title}": ${chapters[0].content}`);
+  } else {
+    // Full first chapter
+    parts.push(`Chapter 1 "${chapters[0].title}": ${chapters[0].content}`);
+
+    // Middle chapters: title + excerpt
+    for (let i = 1; i < chapters.length - 1; i++) {
+      const excerpt = chapters[i].content.slice(0, 100) + '...';
+      parts.push(`Chapter ${chapters[i].chapter_number} "${chapters[i].title}": ${excerpt}`);
+    }
+
+    // Full last chapter
+    const last = chapters[chapters.length - 1];
+    parts.push(`Chapter ${last.chapter_number} "${last.title}": ${last.content}`);
+  }
+
+  return parts.join('\n\n');
+}
+
+export async function generateChapter(
+  bookTitle: string,
+  ageRange: AgeRange,
+  chapters: Chapter[],
+  userPrompt: string,
+  apiKey: string,
+): Promise<GeneratedChapter> {
+  const chapterNumber = chapters.length + 1;
+  const storyContext = buildStoryContext(chapters, bookTitle);
+
+  const prompt = `Write chapter ${chapterNumber} of a story for ages ${ageRange}.
+
+Target: ${WORD_TARGETS[ageRange]}
+
+${storyContext}
+
+The reader's idea for this chapter: "${userPrompt}"
 
 Return JSON:
 {
-  "title": "string",
-  "subtitle": "one-line subtitle",
-  "summary": "meta description, max 160 chars",
-  "category": "history|science|nature|geography|technology|food|health|arts|sport|space|maths|language",
-  "era": "optional era/period or null",
-  "heroImageQuery": "Wikimedia Commons search query for hero image",
-  "introduction": "opening paragraph",
-  "sections": [{"heading":"string","content":"paragraphs separated by \\n\\n, **bold** ok","imageQuery":"Wikimedia Commons search query","imageCaption":"caption"}],
-  "pullQuote": "compelling quote or key fact",
-  "conclusion": "closing paragraph",
-  "timeline": [{"date":"string","event":"string"}],
-  "furtherReading": ["topic1","topic2","topic3"],
-  "vocabulary": [{"term":"string","definition":"level-appropriate definition"}],
-  "didYouKnow": ["surprising fact 1","surprising fact 2"],
-  "keyFacts": ["takeaway 1","takeaway 2","takeaway 3"],
-  "comprehension": [{"question":"string","options":["A","B","C","D"],"correctIndex":0,"explanation":"why correct"}]
+  "title": "chapter title",
+  "content": "the full chapter text, with paragraph breaks as \\n\\n"
 }
 
 Rules:
-- Factually accurate, engaging narrative style
-- imageQuery values must be specific for Wikimedia Commons (e.g. "Bayeux Tapestry Battle of Hastings")
-- timeline: 4-8 entries. furtherReading: 3 topics
-- vocabulary: 4-6 key terms. didYouKnow: 2-3 facts. keyFacts: 3-5 takeaways
-- comprehension: 3-4 questions, 4 options each, plausible distractors
-- All content appropriate for the reading level
+- Continue naturally from the previous chapter (if any)
+- Match the established tone, characters, and setting
+- End the chapter at a natural pause point that invites continuation
+- Age-appropriate language and themes
 - JSON only, no text outside the object`;
-}
 
-export async function generateArticle(
-  topic: string,
-  readingLevel: ReadingLevel,
-  apiKey: string
-): Promise<GeneratedArticle> {
   const response = await fetch('https://api.anthropic.com/v1/messages', {
     method: 'POST',
     headers: {
@@ -56,14 +74,9 @@ export async function generateArticle(
     },
     body: JSON.stringify({
       model: 'claude-haiku-4-5-20251001',
-      max_tokens: 5000,
+      max_tokens: 2000,
       system: SYSTEM_PROMPT,
-      messages: [
-        {
-          role: 'user',
-          content: buildUserPrompt(topic, readingLevel),
-        },
-      ],
+      messages: [{ role: 'user', content: prompt }],
     }),
   });
 
@@ -77,21 +90,79 @@ export async function generateArticle(
   };
 
   const textBlock = result.content.find((block) => block.type === 'text');
-  if (!textBlock) {
-    throw new Error('No text content in Claude response');
-  }
+  if (!textBlock) throw new Error('No text content in Claude response');
 
   const cleaned = sanitiseClaudeResponse(textBlock.text);
-  let parsed: unknown;
-  try {
-    parsed = JSON.parse(cleaned);
-  } catch {
-    throw new Error('Failed to parse Claude response as JSON');
+  const parsed = JSON.parse(cleaned) as { title?: string; content?: string };
+
+  if (!parsed.title || !parsed.content) {
+    throw new Error('Claude response missing title or content');
   }
 
-  if (!validateArticleJSON(parsed)) {
-    throw new Error('Claude response does not match expected article structure');
+  return { title: parsed.title, content: parsed.content };
+}
+
+export async function generateDirections(
+  bookTitle: string,
+  ageRange: AgeRange,
+  chapters: Chapter[],
+  apiKey: string,
+): Promise<StoryDirection[]> {
+  const chapterNumber = chapters.length + 1;
+  const storyContext = buildStoryContext(chapters, bookTitle);
+
+  const prompt = `Suggest 3 different directions for chapter ${chapterNumber} of a story for ages ${ageRange}.
+
+${storyContext}
+
+Return JSON:
+{
+  "directions": [
+    { "id": "a", "summary": "short 5-8 word summary", "preview": "1-2 sentence preview of what could happen" },
+    { "id": "b", "summary": "short 5-8 word summary", "preview": "1-2 sentence preview of what could happen" },
+    { "id": "c", "summary": "short 5-8 word summary", "preview": "1-2 sentence preview of what could happen" }
+  ]
+}
+
+Rules:
+- Each direction should be meaningfully different (different events, tones, or character choices)
+- Previews should excite the reader without being too long
+- Age-appropriate suggestions
+- JSON only, no text outside the object`;
+
+  const response = await fetch('https://api.anthropic.com/v1/messages', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'x-api-key': apiKey,
+      'anthropic-version': '2023-06-01',
+    },
+    body: JSON.stringify({
+      model: 'claude-haiku-4-5-20251001',
+      max_tokens: 1000,
+      system: SYSTEM_PROMPT,
+      messages: [{ role: 'user', content: prompt }],
+    }),
+  });
+
+  if (!response.ok) {
+    const errorText = await response.text();
+    throw new Error(`Claude API error (${response.status}): ${errorText}`);
   }
 
-  return parsed;
+  const result = await response.json() as {
+    content: Array<{ type: string; text: string }>;
+  };
+
+  const textBlock = result.content.find((block) => block.type === 'text');
+  if (!textBlock) throw new Error('No text content in Claude response');
+
+  const cleaned = sanitiseClaudeResponse(textBlock.text);
+  const parsed = JSON.parse(cleaned) as { directions?: StoryDirection[] };
+
+  if (!Array.isArray(parsed.directions) || parsed.directions.length === 0) {
+    throw new Error('Claude response missing directions');
+  }
+
+  return parsed.directions;
 }

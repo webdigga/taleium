@@ -1,16 +1,16 @@
 import type { Env } from '../types';
-import { getAllArticlesForSitemap } from '../services/cache';
+import { getPublicBooks } from '../services/db';
 
 export async function handleSitemap(env: Env): Promise<Response> {
-  const articles = await getAllArticlesForSitemap(env);
+  const books = await getPublicBooks(env);
 
-  const urls = articles.map(
-    (a) => `  <url>
-    <loc>https://taleium.com/${a.slug}/${a.reading_level}</loc>
-    <lastmod>${a.generated_at.split('T')[0]}</lastmod>
-    <changefreq>monthly</changefreq>
-    <priority>0.8</priority>
-  </url>`
+  const urls = books.map(
+    (b) => `  <url>
+    <loc>https://taleium.com/shared/${b.share_token}</loc>
+    <lastmod>${b.updated_at.split('T')[0]}</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.7</priority>
+  </url>`,
   );
 
   const xml = `<?xml version="1.0" encoding="UTF-8"?>

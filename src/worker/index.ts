@@ -1,65 +1,91 @@
 import type { Env } from './types';
-import { handleGenerate } from './routes/generate';
-import { handleGetArticle, handleSuggestions, handleBrowse, handleBrowseCategory } from './routes/article';
+import { handleSignup, handleLogin, handleLogout, handleMe } from './routes/auth';
+import {
+  handleListBooks,
+  handleCreateBook,
+  handleGetBook,
+  handleUpdateBook,
+  handleDeleteBook,
+  handleCreateChapter,
+  handleGetDirections,
+  handleCreateChapterFromDirection,
+} from './routes/books';
+import { handlePublicBooks, handlePublicBook, handleSharedBook } from './routes/public';
 import { handleSitemap } from './routes/sitemap';
 
 export default {
   async fetch(request: Request, env: Env, ctx: ExecutionContext): Promise<Response> {
     const url = new URL(request.url);
     const path = url.pathname;
+    const method = request.method;
 
-    // CORS headers for API routes
     const corsHeaders = {
       'Access-Control-Allow-Origin': '*',
-      'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
+      'Access-Control-Allow-Methods': 'GET, POST, PATCH, DELETE, OPTIONS',
       'Access-Control-Allow-Headers': 'Content-Type',
+      'Access-Control-Allow-Credentials': 'true',
     };
 
-    if (request.method === 'OPTIONS') {
+    if (method === 'OPTIONS') {
       return new Response(null, { status: 204, headers: corsHeaders });
     }
 
     try {
       let response: Response;
 
-      // API routes
-      if (path === '/api/generate') {
-        response = await handleGenerate(request, env, ctx);
-      } else if (path.startsWith('/api/suggestions/')) {
-        const parts = path.replace('/api/suggestions/', '').split('/');
-        if (parts.length === 2) {
-          response = await handleSuggestions(parts[0], parts[1], env);
-        } else {
-          response = new Response(JSON.stringify({ existing: [], suggested: [] }), {
-            status: 200,
-            headers: { 'Content-Type': 'application/json' },
-          });
-        }
-      } else if (path.startsWith('/api/article/')) {
-        const parts = path.replace('/api/article/', '').split('/');
-        if (parts.length === 2) {
-          response = await handleGetArticle(parts[0], parts[1], env);
-        } else {
-          response = new Response(JSON.stringify({ error: 'Invalid article path' }), {
-            status: 400,
-            headers: { 'Content-Type': 'application/json' },
-          });
-        }
-      } else if (path === '/api/browse') {
-        response = await handleBrowse(env);
-      } else if (path.startsWith('/api/browse/')) {
-        const category = path.replace('/api/browse/', '');
-        response = await handleBrowseCategory(category, env);
+      // Auth routes
+      if (path === '/api/auth/signup' && method === 'POST') {
+        response = await handleSignup(request, env);
+      } else if (path === '/api/auth/login' && method === 'POST') {
+        response = await handleLogin(request, env);
+      } else if (path === '/api/auth/logout' && method === 'POST') {
+        response = await handleLogout(request, env);
+      } else if (path === '/api/auth/me' && method === 'GET') {
+        response = await handleMe(request, env);
+
+      // Book routes
+      } else if (path === '/api/books' && method === 'GET') {
+        response = await handleListBooks(request, env);
+      } else if (path === '/api/books' && method === 'POST') {
+        response = await handleCreateBook(request, env, ctx);
+      } else if (/^\/api\/books\/[^/]+$/.test(path) && method === 'GET') {
+        const bookId = path.split('/')[3];
+        response = await handleGetBook(request, env, bookId);
+      } else if (/^\/api\/books\/[^/]+$/.test(path) && method === 'PATCH') {
+        const bookId = path.split('/')[3];
+        response = await handleUpdateBook(request, env, bookId);
+      } else if (/^\/api\/books\/[^/]+$/.test(path) && method === 'DELETE') {
+        const bookId = path.split('/')[3];
+        response = await handleDeleteBook(request, env, bookId);
+      } else if (/^\/api\/books\/[^/]+\/chapters$/.test(path) && method === 'POST') {
+        const bookId = path.split('/')[3];
+        response = await handleCreateChapter(request, env, bookId);
+      } else if (/^\/api\/books\/[^/]+\/directions$/.test(path) && method === 'POST') {
+        const bookId = path.split('/')[3];
+        response = await handleGetDirections(request, env, bookId);
+      } else if (/^\/api\/books\/[^/]+\/chapters\/from-direction$/.test(path) && method === 'POST') {
+        const bookId = path.split('/')[3];
+        response = await handleCreateChapterFromDirection(request, env, bookId);
+
+      // Public routes
+      } else if (path === '/api/public' && method === 'GET') {
+        response = await handlePublicBooks(env);
+      } else if (/^\/api\/public\/[^/]+$/.test(path) && method === 'GET') {
+        const bookId = path.split('/')[3];
+        response = await handlePublicBook(env, bookId);
+      } else if (/^\/api\/shared\/[^/]+$/.test(path) && method === 'GET') {
+        const token = path.split('/')[3];
+        response = await handleSharedBook(env, token);
+
+      // Sitemap & robots
       } else if (path === '/sitemap.xml') {
         response = await handleSitemap(env);
       } else if (path === '/robots.txt') {
         response = new Response(
           `User-agent: *\nAllow: /\n\nSitemap: https://taleium.com/sitemap.xml`,
-          { headers: { 'Content-Type': 'text/plain' } }
+          { headers: { 'Content-Type': 'text/plain' } },
         );
       } else {
-        // For all other routes, serve the SPA (Cloudflare Pages handles this via [site])
-        // In dev, this falls through to Vite; in prod, Cloudflare Pages serves static assets
         return new Response(null, { status: 404 });
       }
 

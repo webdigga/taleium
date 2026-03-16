@@ -1,52 +1,65 @@
 export interface Env {
-  ARTICLE_CACHE: KVNamespace;
   DB: D1Database;
   ANTHROPIC_API_KEY: string;
 }
 
-export type ReadingLevel = 'young-explorer' | 'curious-mind' | 'deep-dive';
+export type AgeRange = '3-5' | '6-8' | '9-12';
 
-export interface TimelineEntry {
-  date: string;
-  event: string;
+export type Visibility = 'private' | 'public' | 'link';
+
+export interface User {
+  id: string;
+  email: string;
+  display_name: string;
+  created_at: string;
+  updated_at: string;
 }
 
-export interface ArticleSection {
-  heading: string;
-  content: string;
-  imageQuery: string;
-  imageCaption: string;
+export interface Session {
+  id: string;
+  user_id: string;
+  created_at: string;
+  expires_at: string;
 }
 
-export interface VocabularyTerm {
-  term: string;
-  definition: string;
-}
-
-export interface ComprehensionQuestion {
-  question: string;
-  options: string[];
-  correctIndex: number;
-  explanation: string;
-}
-
-export interface GeneratedArticle {
+export interface Book {
+  id: string;
+  user_id: string;
   title: string;
-  subtitle: string;
+  description: string | null;
+  age_range: AgeRange;
+  visibility: Visibility;
+  share_token: string | null;
+  cover_image_url: string | null;
+  cover_image_attribution: string | null;
+  chapter_count: number;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface Chapter {
+  id: string;
+  book_id: string;
+  chapter_number: number;
+  title: string;
+  content: string;
+  user_prompt: string | null;
+  created_at: string;
+}
+
+export interface BookWithChapters extends Book {
+  chapters: Chapter[];
+}
+
+export interface GeneratedChapter {
+  title: string;
+  content: string;
+}
+
+export interface StoryDirection {
+  id: string;
   summary: string;
-  category: string;
-  era?: string;
-  heroImageQuery: string;
-  introduction: string;
-  sections: ArticleSection[];
-  pullQuote: string;
-  conclusion: string;
-  timeline: TimelineEntry[];
-  furtherReading: string[];
-  vocabulary: VocabularyTerm[];
-  didYouKnow: string[];
-  keyFacts: string[];
-  comprehension: ComprehensionQuestion[];
+  preview: string;
 }
 
 export interface ResolvedImage {
@@ -56,35 +69,4 @@ export interface ResolvedImage {
   attribution: string;
   width: number;
   height: number;
-}
-
-export interface CachedArticle {
-  slug: string;
-  readingLevel: ReadingLevel;
-  topic: string;
-  generatedAt: string;
-  article: GeneratedArticle;
-  images: {
-    hero: ResolvedImage | null;
-    sections: (ResolvedImage | null)[];
-  };
-}
-
-export interface ArticleMetadata {
-  id: number;
-  slug: string;
-  reading_level: ReadingLevel;
-  topic: string;
-  title: string;
-  summary: string | null;
-  category: string | null;
-  era: string | null;
-  hero_image_url: string | null;
-  generated_at: string;
-  view_count: number;
-}
-
-export interface GenerateRequest {
-  topic: string;
-  readingLevel: ReadingLevel;
 }

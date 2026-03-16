@@ -1,51 +1,14 @@
-import type { GeneratedArticle, ReadingLevel } from '../types';
+import type { AgeRange, Visibility } from '../types';
 
-const VALID_LEVELS: ReadingLevel[] = ['young-explorer', 'curious-mind', 'deep-dive'];
+const VALID_AGE_RANGES: AgeRange[] = ['3-5', '6-8', '9-12'];
+const VALID_VISIBILITIES: Visibility[] = ['private', 'public', 'link'];
 
-export function isValidReadingLevel(level: string): level is ReadingLevel {
-  return VALID_LEVELS.includes(level as ReadingLevel);
+export function isValidAgeRange(value: string): value is AgeRange {
+  return VALID_AGE_RANGES.includes(value as AgeRange);
 }
 
-export function validateArticleJSON(data: unknown): data is GeneratedArticle {
-  if (!data || typeof data !== 'object') return false;
-
-  const obj = data as Record<string, unknown>;
-
-  const requiredStrings = ['title', 'subtitle', 'summary', 'category', 'heroImageQuery', 'introduction', 'pullQuote', 'conclusion'];
-  for (const key of requiredStrings) {
-    if (typeof obj[key] !== 'string' || (obj[key] as string).length === 0) {
-      return false;
-    }
-  }
-
-  if (!Array.isArray(obj.sections) || obj.sections.length === 0) return false;
-  for (const section of obj.sections) {
-    if (
-      typeof section.heading !== 'string' ||
-      typeof section.content !== 'string' ||
-      typeof section.imageQuery !== 'string' ||
-      typeof section.imageCaption !== 'string'
-    ) {
-      return false;
-    }
-  }
-
-  if (!Array.isArray(obj.timeline)) return false;
-  if (!Array.isArray(obj.furtherReading)) return false;
-
-  // New educational fields — default to empty arrays if missing (backwards compat with cached articles)
-  if (obj.vocabulary !== undefined && !Array.isArray(obj.vocabulary)) return false;
-  if (obj.didYouKnow !== undefined && !Array.isArray(obj.didYouKnow)) return false;
-  if (obj.keyFacts !== undefined && !Array.isArray(obj.keyFacts)) return false;
-  if (obj.comprehension !== undefined && !Array.isArray(obj.comprehension)) return false;
-
-  // Ensure defaults for missing fields
-  if (!obj.vocabulary) (obj as Record<string, unknown>).vocabulary = [];
-  if (!obj.didYouKnow) (obj as Record<string, unknown>).didYouKnow = [];
-  if (!obj.keyFacts) (obj as Record<string, unknown>).keyFacts = [];
-  if (!obj.comprehension) (obj as Record<string, unknown>).comprehension = [];
-
-  return true;
+export function isValidVisibility(value: string): value is Visibility {
+  return VALID_VISIBILITIES.includes(value as Visibility);
 }
 
 export function sanitiseClaudeResponse(raw: string): string {

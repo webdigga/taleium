@@ -1,86 +1,58 @@
-# Current State (2026-03-14)
+# Current State (2026-03-16)
+
+## Pivot Complete: Education Articles → Family Story Creator
+
+Taleium has been pivoted from an AI-powered educational article platform to a **collaborative family story creation tool**. Parents and children sit together, create stories chapter by chapter, and build their own books.
 
 ## What's Working
 
-- Full article generation pipeline (Claude → KV/D1 → React rendering)
-- Three reading levels with UK key stage labels
-- Wikimedia Commons images with attribution (background resolution)
-- Browse page with category filtering
-- Read Aloud (Web Speech API) with section tracking
-- Read Next suggestions (existing articles in same category)
-- SEO: sitemap.xml, robots.txt, meta descriptions
-- Mobile-responsive design
+### Backend
+- **Auth system** — Email + password signup/login, PBKDF2 hashing (100k iterations, Web Crypto API), HttpOnly session cookies (30 days), session validation
+- **Book CRUD** — Create, list, get, update, delete books with age range, visibility, and cover images
+- **Chapter generation** — AI writes chapters from user prompts, with story context compression (full first + last chapter, excerpts of middle)
+- **Direction suggestions** — AI suggests 2-3 meaningfully different story directions to pick from
+- **Visibility system** — Per-book private/public/shareable-link with auto-generated share tokens
+- **Public/shared routes** — Browse public books, read shared books without auth
+- **Cover images** — Wikimedia Commons integration (reused from education version), resolved in background via `ctx.waitUntil()`
+- **Sitemap** — Updated for public books
 
-## Recently Added (This Session)
+### Frontend
+- **Auth flow** — Sign up, log in, sign out with auth-aware header navigation
+- **Dashboard** — "My Books" grid with book cards showing cover, title, age range, chapter count
+- **Book creation** — Title, description, age range picker, optional cover image search
+- **Book workshop** — Chapter list, add chapter, visibility settings, read story
+- **Story creation** — Write a prompt OR pick from AI-suggested directions, loading animation during generation
+- **Chapter reader** — Sequential reading view with chapter headings and content
+- **Shared/public views** — Read-only views for shared and public books
+- **Browse page** — Public books grid
+- **Mobile-responsive design** — All pages work on mobile
 
-### Educational Features
-All newly added to the Claude prompt and article renderer:
-- **Key Facts box** — 3-5 essential takeaways, shown before the introduction
-- **Vocabulary callouts** — 4-6 key terms with definitions, grid layout after conclusion
-- **"Did You Know?" boxes** — 2-3 surprising facts, spaced between article sections
-- **Comprehension Quiz** — 3-4 multiple-choice questions with instant right/wrong feedback, explanations, and a final score
-
-### Article Page Enhancements
-- **Reading progress bar** — gradient bar fixed below the sticky header, animates as user scrolls
-- **Read time estimate** — "X min read" badge in article meta (word count / 200 wpm)
-
-### Messaging Pivot to Education
-Updated all copy to reflect the education USP:
-- Hero: "Any topic. Any reading level. Instantly."
-- Subtitle: "...get a lesson ready to read, share, or print"
-- Reading levels now show key stages: "KS1 · Ages 6-9", "KS2-KS3 · Ages 10-13", "GCSE+ · Adult"
-- Topic suggestions switched to curriculum-aligned: Water Cycle, Photosynthesis, Roman Empire, etc.
-- Search placeholder: "What do you want to learn about?"
-- Footer: "Illustrated learning at every reading level."
-
-### Bug Fixes
-- Read Next cards now have `.read-next-body` wrapper for proper padding
-- Read Next grid goes to horizontal single-column on mobile
-- Featured section cards have horizontal padding on mobile
-
-## Open Issue: Generation Timeout
-
-### The Problem
-`POST /api/generate` returns **504 Gateway Time-out** after ~60 seconds. The expanded Claude prompt (article + vocabulary + quiz + key facts + did-you-know) generates more output, pushing the total API call time past the worker/dev-proxy limit.
-
-### What Was Done
-1. **Background image resolution** — Article text saves to KV immediately after Claude responds, images resolve in `ctx.waitUntil()`. This removed ~15-20s of Wikimedia calls from the critical path.
-2. **Switched from Sonnet to Haiku 4.5** (`claude-haiku-4-5-20251001`) — significantly faster generation.
-3. **Trimmed the prompt** — reduced word count targets (600/900/1500 down from 800/1200/2000), compressed the JSON schema example, reduced section counts.
-4. **Reduced max_tokens** from 8000 to 5000.
-
-### Current Status
-The model was just switched to Haiku and the prompt trimmed. **This has not been tested yet.** The user reported one more 504 after the background image change but before the Haiku switch.
-
-### If It Still Times Out
-Options to try next:
-1. **Verify it's the Claude API call** — add `console.log` timestamps before/after the `fetch` to confirm where the 60s is spent
-2. **Check if it's a dev-proxy issue only** — the `wrangler dev --remote` proxy may have its own timeout that's stricter than production. Try deploying and testing in production.
-3. **Streaming** — use Claude's streaming API (`stream: true`) to keep the connection alive. Collect chunks, parse full JSON at the end. This may bypass subrequest timeouts since time-to-first-byte is fast.
-4. **Two-phase generation** — generate the article content first (fast), then generate educational features (vocabulary, quiz) in a second, smaller API call that runs in `waitUntil()`. The article renders immediately; educational features appear on refresh.
-5. **Further reduce output** — drop comprehension questions to 2, vocabulary to 3 terms, etc.
-
-### The User's Observation
-The user noted "articles are getting created" even with the 504 — meaning the worker likely completes the Claude call and saves to KV, but the dev proxy kills the HTTP response before it returns. The article exists in cache; the client just gets a 504 instead of a redirect. This suggests it may work fine in production.
+### D1 Schema (migration 002)
+- `users` — id, email, password_hash, salt, display_name, timestamps
+- `sessions` — id, user_id, created_at, expires_at
+- `books` — id, user_id, title, description, age_range, visibility, share_token, cover_image, chapter_count, timestamps
+- `chapters` — id, book_id, chapter_number, title, content, user_prompt, created_at
 
 ## Not Yet Done
 
 ### Production Deployment
-- Need to `wrangler secret put ANTHROPIC_API_KEY` for production
-- First production deploy: `npm run deploy`
-- D1 migration needs to be run on production: `npm run db:migrate`
+- Run migration: `wrangler d1 execute taleium-meta --file=./migrations/002_pivot.sql`
+- Ensure `ANTHROPIC_API_KEY` secret is set: `wrangler secret put ANTHROPIC_API_KEY`
+- Deploy: `npm run deploy`
 
-### Future Features Discussed
-- **Print/PDF export** — formatted handout for classrooms
-- **Collections/Bookshelf** — curated sets of articles (teacher reading lists, student libraries)
-- **Progressive reading** — "Ready for the next level?" linking same topic at higher level (decided to skip for now)
+### Future Features
+- **Chapter editing/deletion** — Currently chapters can only be added, not edited or removed
+- **Book deletion confirmation** — No confirmation dialog yet
+- **Cover image re-selection** — Can only set cover at creation time
+- **Password reset** — No forgot password flow
+- **Rate limiting** — No rate limiting on auth or generation endpoints
 
 ## Infrastructure
 
 | Resource | ID | Notes |
 |----------|----|-------|
-| KV Namespace | `bf1b6840f5764f91b9ea49b2015e97e8` | ARTICLE_CACHE |
+| KV Namespace | `bf1b6840f5764f91b9ea49b2015e97e8` | ARTICLE_CACHE (legacy, still bound but unused) |
 | KV Preview | `4009bf44b55e4364a5674856e12fd84f` | For `wrangler dev --remote` |
 | D1 Database | `93aeccbf-35ec-4a3b-bc2c-f6fb91bb6a90` | taleium-meta |
 | CF Account | `749e8e915104c226e492df9c5bb31444` | Personal account |
-| API Model | `claude-haiku-4-5-20251001` | Was Sonnet, switched for speed |
+| API Model | `claude-haiku-4-5-20251001` | Haiku 4.5 for fast chapter generation |

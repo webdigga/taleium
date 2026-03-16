@@ -1,199 +1,179 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 
-interface ArticleContent {
-  introduction: string;
-  sections: { heading: string; content: string }[];
-  conclusion: string;
-}
-
 interface ReadAloudControlsProps {
-  content: ArticleContent;
-  readingLevel: string;
-  onSectionChange: (index: number) => void;
+  chapters: Array<{ chapter_number: number; title: string; content: string }>;
 }
 
-type PlayState = 'idle' | 'playing' | 'paused';
-
-const RATE_OPTIONS = [0.75, 1, 1.25, 1.5];
-
-const DEFAULT_RATES: Record<string, number> = {
-  'young-explorer': 0.85,
-  'curious-mind': 0.95,
-  'deep-dive': 1.0,
-};
-
-function splitIntoParagraphs(text: string): string[] {
-  return text
-    .split(/\n\n+/)
-    .map((p) => p.replace(/\*\*/g, '').trim())
-    .filter(Boolean);
+interface Part {
+  text: string;
+  chapterIndex: number;
 }
 
-export default function ReadAloudControls({
-  content,
-  readingLevel,
-  onSectionChange,
-}: ReadAloudControlsProps) {
-  const [playState, setPlayState] = useState<PlayState>('idle');
-  const [rate, setRate] = useState(DEFAULT_RATES[readingLevel] || 1);
-  const [currentPartIndex, setCurrentPartIndex] = useState(0);
+function buildParts(chapters: ReadAloudControlsProps['chapters']): Part[] {
+  const parts: Part[] = [];
+  chapters.forEach((ch, i) => {
+    parts.push({ text: `Chapter ${ch.chapter_number}. ${ch.title}`, chapterIndex: i });
+    const paragraphs = ch.content.split('\n\n').filter((p) => p.trim());
+    for (const para of paragraphs) {
+      parts.push({ text: para, chapterIndex: i });
+    }
+  });
+  return parts;
+}
 
-  const partsRef = useRef<{ sectionIndex: number; text: string }[]>([]);
+const SPEEDS = [0.75, 1, 1.25, 1.5];
+
+export default function ReadAloudControls({ chapters }: ReadAloudControlsProps) {
+  const [isPlaying, setIsPlaying] = useState(false);
+  const [isPaused, setIsPaused] = useState(false);
+  const [currentPart, setCurrentPart] = useState(0);
+  const [rate, setRate] = useState(1);
+  const [showBar, setShowBar] = useState(false);
+  const partsRef = useRef<Part[]>([]);
   const currentPartRef = useRef(0);
 
-  // Build a flat list of parts: intro paragraphs, then each section's paragraphs, then conclusion paragraphs
   useEffect(() => {
-    const parts: { sectionIndex: number; text: string }[] = [];
+    partsRef.current = buildParts(chapters);
+  }, [chapters]);
 
-    // Introduction = section index -1
-    for (const p of splitIntoParagraphs(content.introduction)) {
-      parts.push({ sectionIndex: -1, text: p });
+  const stop = useCallback(() => {
+    window.speechSynthesis.cancel();
+    setIsPlaying(false);
+    setIsPaused(false);
+    setCurrentPart(0);
+    currentPartRef.current = 0;
+    setShowBar(false);
+  }, []);
+
+  const speakPart = useCallback((index: number) => {
+    const parts = partsRef.current;
+    if (index >= parts.length) {
+      stop();
+      return;
     }
 
-    // Sections
-    content.sections.forEach((section, i) => {
-      parts.push({ sectionIndex: i, text: section.heading });
-      for (const p of splitIntoParagraphs(section.content)) {
-        parts.push({ sectionIndex: i, text: p });
-      }
-    });
+    const utterance = new SpeechSynthesisUtterance(parts[index].text);
+    utterance.lang = 'en-GB';
+    utterance.rate = rate;
 
-    // Conclusion = section index -2
-    for (const p of splitIntoParagraphs(content.conclusion)) {
-      parts.push({ sectionIndex: -2, text: p });
+    utterance.onend = () => {
+      const next = currentPartRef.current + 1;
+      currentPartRef.current = next;
+      setCurrentPart(next);
+      speakPart(next);
+    };
+
+    window.speechSynthesis.speak(utterance);
+  }, [rate, stop]);
+
+  const play = useCallback(() => {
+    if (isPaused) {
+      window.speechSynthesis.resume();
+      setIsPaused(false);
+      setIsPlaying(true);
+      return;
     }
 
-    partsRef.current = parts;
-  }, [content]);
+    window.speechSynthesis.cancel();
+    setIsPlaying(true);
+    setShowBar(true);
+    currentPartRef.current = 0;
+    setCurrentPart(0);
+    speakPart(0);
+  }, [isPaused, speakPart]);
 
-  const totalParts = partsRef.current.length;
+  const pause = useCallback(() => {
+    window.speechSynthesis.pause();
+    setIsPaused(true);
+    setIsPlaying(false);
+  }, []);
 
-  const speakPart = useCallback(
-    (index: number) => {
-      if (index >= partsRef.current.length) {
-        setPlayState('idle');
-        setCurrentPartIndex(0);
-        currentPartRef.current = 0;
-        onSectionChange(-999);
-        return;
-      }
+  const changeRate = useCallback((newRate: number) => {
+    setRate(newRate);
+    if (isPlaying || isPaused) {
+      window.speechSynthesis.cancel();
+      setIsPaused(false);
+      setIsPlaying(true);
+      const idx = currentPartRef.current;
 
-      const part = partsRef.current[index];
-      const utterance = new SpeechSynthesisUtterance(part.text);
-      utterance.rate = rate;
+      const utterance = new SpeechSynthesisUtterance(partsRef.current[idx]?.text || '');
       utterance.lang = 'en-GB';
-
-      utterance.onstart = () => {
-        setCurrentPartIndex(index);
-        currentPartRef.current = index;
-        onSectionChange(part.sectionIndex);
-      };
-
+      utterance.rate = newRate;
       utterance.onend = () => {
         const next = currentPartRef.current + 1;
         currentPartRef.current = next;
+        setCurrentPart(next);
         speakPart(next);
       };
-
-      speechSynthesis.speak(utterance);
-    },
-    [rate, onSectionChange]
-  );
-
-  function handlePlay() {
-    if (playState === 'paused') {
-      speechSynthesis.resume();
-      setPlayState('playing');
-    } else {
-      speechSynthesis.cancel();
-      setPlayState('playing');
-      speakPart(currentPartRef.current);
+      window.speechSynthesis.speak(utterance);
     }
-  }
+  }, [isPlaying, isPaused, speakPart]);
 
-  function handlePause() {
-    speechSynthesis.pause();
-    setPlayState('paused');
-  }
-
-  function handleStop() {
-    speechSynthesis.cancel();
-    setPlayState('idle');
-    setCurrentPartIndex(0);
-    currentPartRef.current = 0;
-    onSectionChange(-999);
-  }
-
-  // Cleanup on unmount
   useEffect(() => {
     return () => {
-      speechSynthesis.cancel();
+      window.speechSynthesis.cancel();
     };
   }, []);
 
-  // Re-apply rate changes: cancel current and restart from current part
-  useEffect(() => {
-    if (playState === 'playing') {
-      speechSynthesis.cancel();
-      speakPart(currentPartRef.current);
-    }
-  }, [rate, playState, speakPart]);
+  if (!('speechSynthesis' in window)) return null;
 
-  // Compute which "section" label to show
-  const currentSection = partsRef.current[currentPartIndex]?.sectionIndex ?? -1;
-  let sectionLabel = '';
-  if (currentSection === -1) sectionLabel = 'Introduction';
-  else if (currentSection === -2) sectionLabel = 'Conclusion';
-  else sectionLabel = `Section ${currentSection + 1} of ${content.sections.length}`;
-
-  if (playState === 'idle' && currentPartIndex === 0) {
-    return (
-      <div className="read-aloud-trigger">
-        <button className="read-aloud-btn" onClick={handlePlay} aria-label="Read article aloud">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
-            <path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z" />
-          </svg>
-          Read Aloud
-        </button>
-      </div>
-    );
-  }
+  const parts = partsRef.current;
+  const currentChapter = parts[currentPart]?.chapterIndex ?? 0;
+  const chapterLabel = chapters[currentChapter]
+    ? `Ch. ${chapters[currentChapter].chapter_number}`
+    : '';
 
   return (
-    <div className="read-aloud-bar" role="region" aria-label="Read aloud controls">
-      <div className="read-aloud-controls">
-        {playState === 'playing' ? (
-          <button className="ra-btn" onClick={handlePause} aria-label="Pause">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z" /></svg>
+    <>
+      <div className="read-aloud-trigger">
+        {showBar ? (
+          <button className="read-aloud-btn active" onClick={stop}>
+            <span aria-hidden="true">&#9632;</span> Stop reading
           </button>
         ) : (
-          <button className="ra-btn" onClick={handlePlay} aria-label="Play">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z" /></svg>
+          <button className="read-aloud-btn" onClick={play}>
+            <span aria-hidden="true">&#9654;</span> Read aloud
           </button>
         )}
-        <button className="ra-btn" onClick={handleStop} aria-label="Stop">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M6 6h12v12H6z" /></svg>
-        </button>
-
-        <span className="ra-section-label">{sectionLabel}</span>
-
-        <div className="ra-speed">
-          {RATE_OPTIONS.map((r) => (
-            <button
-              key={r}
-              className={`ra-speed-btn ${rate === r ? 'active' : ''}`}
-              onClick={() => setRate(r)}
-              aria-label={`Speed ${r}x`}
-            >
-              {r}x
-            </button>
-          ))}
-        </div>
-
-        <div className="ra-progress">
-          {currentPartIndex + 1}/{totalParts}
-        </div>
       </div>
-    </div>
+
+      {showBar && (
+        <div className="read-aloud-bar">
+          <div className="read-aloud-controls">
+            {isPlaying ? (
+              <button className="ra-btn" onClick={pause} aria-label="Pause">
+                &#10074;&#10074;
+              </button>
+            ) : (
+              <button className="ra-btn" onClick={play} aria-label="Play">
+                &#9654;
+              </button>
+            )}
+
+            <button className="ra-btn" onClick={stop} aria-label="Stop">
+              &#9632;
+            </button>
+
+            <span className="ra-section-label">{chapterLabel}</span>
+
+            <div className="ra-speed">
+              {SPEEDS.map((s) => (
+                <button
+                  key={s}
+                  className={`ra-speed-btn ${rate === s ? 'active' : ''}`}
+                  onClick={() => changeRate(s)}
+                >
+                  {s}x
+                </button>
+              ))}
+            </div>
+
+            <span className="ra-progress">
+              {Math.min(currentPart + 1, parts.length)} / {parts.length}
+            </span>
+          </div>
+        </div>
+      )}
+    </>
   );
 }

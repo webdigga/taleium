@@ -1,0 +1,141 @@
+import { useState, useEffect } from 'react';
+import { useParams, Link } from 'react-router-dom';
+import ChapterCard from '../components/ChapterCard';
+import VisibilityPicker from '../components/VisibilityPicker';
+import ImageWithAttribution from '../components/ImageWithAttribution';
+
+interface Chapter {
+  id: string;
+  chapter_number: number;
+  title: string;
+  content: string;
+  user_prompt: string | null;
+}
+
+interface Book {
+  id: string;
+  title: string;
+  description: string | null;
+  age_range: string;
+  visibility: string;
+  share_token: string | null;
+  cover_image_url: string | null;
+  cover_image_attribution: string | null;
+  chapter_count: number;
+  chapters: Chapter[];
+}
+
+const AGE_LABELS: Record<string, string> = {
+  '3-5': 'Ages 3\u20135',
+  '6-8': 'Ages 6\u20138',
+  '9-12': 'Ages 9\u201312',
+};
+
+export default function BookView() {
+  const { id } = useParams<{ id: string }>();
+  const [book, setBook] = useState<Book | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
+
+  useEffect(() => {
+    fetch(`/api/books/${id}`, { credentials: 'include' })
+      .then((res) => {
+        if (!res.ok) throw new Error('Failed to load book');
+        return res.json() as Promise<{ book: Book }>;
+      })
+      .then((data) => setBook(data.book))
+      .catch((err) => setError(err.message))
+      .finally(() => setLoading(false));
+  }, [id]);
+
+  async function handleVisibilityChange(visibility: string) {
+    const res = await fetch(`/api/books/${id}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      credentials: 'include',
+      body: JSON.stringify({ visibility }),
+    });
+    const data = await res.json() as { book: Book };
+    if (res.ok) setBook(data.book);
+  }
+
+  if (loading) {
+    return (
+      <main className="page-container" style={{ padding: '4rem', textAlign: 'center', color: 'var(--color-muted)' }}>
+        Loading...
+      </main>
+    );
+  }
+
+  if (error || !book) {
+    return (
+      <main className="page-container" style={{ padding: '4rem', textAlign: 'center' }}>
+        <p style={{ color: 'var(--color-muted)' }}>{error || 'Story not found'}</p>
+        <Link to="/dashboard" className="btn-secondary" style={{ marginTop: '1rem', display: 'inline-block' }}>
+          Back to my stories
+        </Link>
+      </main>
+    );
+  }
+
+  return (
+    <main className="book-view page-container">
+      <div className="book-header">
+        {book.cover_image_url && (
+          <div className="book-cover">
+            <ImageWithAttribution
+              src={book.cover_image_url}
+              alt={book.title}
+              attribution={book.cover_image_attribution || ''}
+            />
+          </div>
+        )}
+        <div className="book-info">
+          <span className={`badge badge-age age-${book.age_range}`}>{AGE_LABELS[book.age_range] || book.age_range}</span>
+          <h1 className="book-title">{book.title}</h1>
+          {book.description && <p className="book-description">{book.description}</p>}
+        </div>
+      </div>
+
+      <div className="book-actions">
+        <Link to={`/books/${id}/new-chapter`} className="btn-primary">Add chapter</Link>
+        {book.chapters.length > 0 && (
+          <Link to={`/books/${id}/read`} className="btn-secondary">Read story</Link>
+        )}
+      </div>
+
+      {book.chapters.length > 0 && (
+        <section className="chapters-section">
+          <h2>Chapters</h2>
+          <div className="chapters-list">
+            {book.chapters.map((ch, i) => (
+              <ChapterCard
+                key={ch.id}
+                bookId={book.id}
+                chapterNumber={ch.chapter_number}
+                chapterIndex={i}
+                title={ch.title}
+                content={ch.content}
+              />
+            ))}
+          </div>
+        </section>
+      )}
+
+      {book.chapters.length === 0 && (
+        <div className="dashboard-empty">
+          <p>Your story is ready! Add the first chapter to get started.</p>
+        </div>
+      )}
+
+      <section className="book-settings">
+        <h2>Sharing</h2>
+        <VisibilityPicker
+          value={book.visibility}
+          shareToken={book.share_token}
+          onChange={handleVisibilityChange}
+        />
+      </section>
+    </main>
+  );
+}
