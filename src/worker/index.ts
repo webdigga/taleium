@@ -1,3 +1,4 @@
+import { getAssetFromKV } from '@cloudflare/kv-asset-handler';
 import type { Env } from './types';
 import { handleSignup, handleLogin, handleLogout, handleMe } from './routes/auth';
 import {
@@ -86,7 +87,26 @@ export default {
           { headers: { 'Content-Type': 'text/plain' } },
         );
       } else {
-        return new Response(null, { status: 404 });
+        // Serve static assets (SPA)
+        try {
+          return await getAssetFromKV(
+            { request, waitUntil: ctx.waitUntil.bind(ctx) } as unknown as { request: Request; waitUntil: (promise: Promise<unknown>) => void },
+            // @ts-expect-error — wrangler injects __STATIC_CONTENT at runtime
+            { ASSET_NAMESPACE: env.__STATIC_CONTENT, ASSET_MANIFEST: env.__STATIC_CONTENT_MANIFEST },
+          );
+        } catch {
+          // SPA fallback: serve index.html for client-side routes
+          try {
+            const indexRequest = new Request(new URL('/index.html', request.url).toString(), request);
+            return await getAssetFromKV(
+              { request: indexRequest, waitUntil: ctx.waitUntil.bind(ctx) } as unknown as { request: Request; waitUntil: (promise: Promise<unknown>) => void },
+              // @ts-expect-error — wrangler injects __STATIC_CONTENT at runtime
+              { ASSET_NAMESPACE: env.__STATIC_CONTENT, ASSET_MANIFEST: env.__STATIC_CONTENT_MANIFEST },
+            );
+          } catch {
+            return new Response('Not found', { status: 404 });
+          }
+        }
       }
 
       // Add CORS headers to API responses

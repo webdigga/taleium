@@ -13,6 +13,7 @@
     "db:migrate": "wrangler d1 execute taleium-meta --file=./migrations/001_init.sql"
   },
   "dependencies": {
+    "@cloudflare/kv-asset-handler": "^0.4.2",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
     "react-router-dom": "^6.22.3"
