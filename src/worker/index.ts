@@ -1,4 +1,6 @@
 import { getAssetFromKV } from '@cloudflare/kv-asset-handler';
+// @ts-expect-error — injected by wrangler at build time
+import manifestJSON from '__STATIC_CONTENT_MANIFEST';
 import type { Env } from './types';
 import { handleSignup, handleLogin, handleLogout, handleMe } from './routes/auth';
 import {
@@ -13,6 +15,24 @@ import {
 } from './routes/books';
 import { handlePublicBooks, handlePublicBook, handleSharedBook } from './routes/public';
 import { handleSitemap } from './routes/sitemap';
+
+const assetManifest = JSON.parse(manifestJSON as string);
+
+async function serveAsset(request: Request, env: Env, ctx: ExecutionContext): Promise<Response> {
+  try {
+    return await getAssetFromKV(
+      { request, waitUntil: ctx.waitUntil.bind(ctx) },
+      { ASSET_NAMESPACE: (env as unknown as Record<string, unknown>).__STATIC_CONTENT as KVNamespace, ASSET_MANIFEST: assetManifest },
+    );
+  } catch {
+    // SPA fallback: serve index.html for client-side routes
+    const indexRequest = new Request(new URL('/index.html', request.url).toString(), request);
+    return await getAssetFromKV(
+      { request: indexRequest, waitUntil: ctx.waitUntil.bind(ctx) },
+      { ASSET_NAMESPACE: (env as unknown as Record<string, unknown>).__STATIC_CONTENT as KVNamespace, ASSET_MANIFEST: assetManifest },
+    );
+  }
+}
 
 export default {
   async fetch(request: Request, env: Env, ctx: ExecutionContext): Promise<Response> {
@@ -88,25 +108,7 @@ export default {
         );
       } else {
         // Serve static assets (SPA)
-        try {
-          return await getAssetFromKV(
-            { request, waitUntil: ctx.waitUntil.bind(ctx) } as unknown as { request: Request; waitUntil: (promise: Promise<unknown>) => void },
-            // @ts-expect-error — wrangler injects __STATIC_CONTENT at runtime
-            { ASSET_NAMESPACE: env.__STATIC_CONTENT, ASSET_MANIFEST: env.__STATIC_CONTENT_MANIFEST },
-          );
-        } catch {
-          // SPA fallback: serve index.html for client-side routes
-          try {
-            const indexRequest = new Request(new URL('/index.html', request.url).toString(), request);
-            return await getAssetFromKV(
-              { request: indexRequest, waitUntil: ctx.waitUntil.bind(ctx) } as unknown as { request: Request; waitUntil: (promise: Promise<unknown>) => void },
-              // @ts-expect-error — wrangler injects __STATIC_CONTENT at runtime
-              { ASSET_NAMESPACE: env.__STATIC_CONTENT, ASSET_MANIFEST: env.__STATIC_CONTENT_MANIFEST },
-            );
-          } catch {
-            return new Response('Not found', { status: 404 });
-          }
-        }
+        return await serveAsset(request, env, ctx);
       }
 
       // Add CORS headers to API responses
