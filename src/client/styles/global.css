@@ -462,14 +462,19 @@ input, textarea {
 }
 
 .step-number {
-  display: block;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 56px;
+  height: 56px;
+  margin: 0 auto var(--space-md);
+  border-radius: 50%;
+  background: var(--color-accent);
+  color: white;
   font-family: var(--font-display);
-  font-size: 3.5rem;
+  font-size: 1.5rem;
   font-weight: 800;
   line-height: 1;
-  color: var(--color-accent);
-  opacity: 0.2;
-  margin-bottom: var(--space-sm);
 }
 
 .step-title {
