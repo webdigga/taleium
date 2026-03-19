@@ -1040,6 +1040,14 @@ input, textarea {
   border-radius: var(--radius-lg);
   text-align: center;
   background: var(--color-bg);
+  display: flex;
+  flex-direction: column;
+}
+
+.pricing-card .btn-primary,
+.pricing-card .btn-secondary {
+  width: 100%;
+  margin-top: auto;
 }
 
 .pricing-card-featured {
