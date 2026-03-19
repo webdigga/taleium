@@ -1,8 +1,9 @@
 import { useState } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, Link } from 'react-router-dom';
 import PromptInput from '../components/PromptInput';
 import DirectionCard from '../components/DirectionCard';
 import LoadingChapter from '../components/LoadingChapter';
+import UpgradePrompt from '../components/UpgradePrompt';
 
 interface Direction {
   id: string;
@@ -17,6 +18,7 @@ export default function AddChapter() {
   const [directions, setDirections] = useState<Direction[] | null>(null);
   const [loadingDirections, setLoadingDirections] = useState(false);
   const [error, setError] = useState('');
+  const [limitReached, setLimitReached] = useState(false);
 
   async function handlePromptSubmit(prompt: string) {
     setError('');
@@ -29,8 +31,14 @@ export default function AddChapter() {
         credentials: 'include',
         body: JSON.stringify({ prompt }),
       });
-      const data = await res.json() as { error?: string };
-      if (!res.ok) throw new Error(data.error || 'Failed to generate chapter');
+      const data = await res.json() as { error?: string; code?: string };
+      if (!res.ok) {
+        if (data.code === 'CHAPTER_LIMIT_REACHED') {
+          setLimitReached(true);
+          return;
+        }
+        throw new Error(data.error || 'Failed to generate chapter');
+      }
       navigate(`/books/${id}`);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Something went wrong');
@@ -48,8 +56,14 @@ export default function AddChapter() {
         method: 'POST',
         credentials: 'include',
       });
-      const data = await res.json() as { error?: string; directions: Direction[] };
-      if (!res.ok) throw new Error(data.error || 'Failed to get directions');
+      const data = await res.json() as { error?: string; code?: string; directions: Direction[] };
+      if (!res.ok) {
+        if (data.code === 'CHAPTER_LIMIT_REACHED') {
+          setLimitReached(true);
+          return;
+        }
+        throw new Error(data.error || 'Failed to get directions');
+      }
       setDirections(data.directions);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Something went wrong');
@@ -69,8 +83,14 @@ export default function AddChapter() {
         credentials: 'include',
         body: JSON.stringify({ direction }),
       });
-      const data = await res.json() as { error?: string };
-      if (!res.ok) throw new Error(data.error || 'Failed to generate chapter');
+      const data = await res.json() as { error?: string; code?: string };
+      if (!res.ok) {
+        if (data.code === 'CHAPTER_LIMIT_REACHED') {
+          setLimitReached(true);
+          return;
+        }
+        throw new Error(data.error || 'Failed to generate chapter');
+      }
       navigate(`/books/${id}`);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Something went wrong');
@@ -83,6 +103,18 @@ export default function AddChapter() {
     return (
       <main className="add-chapter-page page-container">
         <LoadingChapter />
+      </main>
+    );
+  }
+
+  if (limitReached) {
+    return (
+      <main className="add-chapter-page page-container">
+        <h1 className="add-chapter-title">Write the next chapter</h1>
+        <UpgradePrompt message="You've reached 3 chapters on the free plan. Upgrade to keep writing this story." />
+        <div style={{ textAlign: 'center', marginTop: 'var(--space-xl)' }}>
+          <Link to={`/books/${id}`} className="btn-secondary">Back to story</Link>
+        </div>
       </main>
     );
   }

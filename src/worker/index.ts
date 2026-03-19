@@ -15,6 +15,12 @@ import {
 } from './routes/books';
 import { handlePublicBooks, handlePublicBook, handleSharedBook } from './routes/public';
 import { handleSitemap } from './routes/sitemap';
+import {
+  handleCreateCheckout,
+  handleBillingPortal,
+  handleBillingStatus,
+  handleStripeWebhook,
+} from './routes/billing';
 
 const assetManifest = JSON.parse(manifestJSON as string);
 
@@ -56,13 +62,23 @@ export default {
 
       // Auth routes
       if (path === '/api/auth/signup' && method === 'POST') {
-        response = await handleSignup(request, env);
+        response = await handleSignup(request, env, ctx);
       } else if (path === '/api/auth/login' && method === 'POST') {
         response = await handleLogin(request, env);
       } else if (path === '/api/auth/logout' && method === 'POST') {
         response = await handleLogout(request, env);
       } else if (path === '/api/auth/me' && method === 'GET') {
         response = await handleMe(request, env);
+
+      // Billing routes
+      } else if (path === '/api/billing/checkout' && method === 'POST') {
+        response = await handleCreateCheckout(request, env);
+      } else if (path === '/api/billing/portal' && method === 'POST') {
+        response = await handleBillingPortal(request, env);
+      } else if (path === '/api/billing/status' && method === 'GET') {
+        response = await handleBillingStatus(request, env);
+      } else if (path === '/api/billing/webhook' && method === 'POST') {
+        response = await handleStripeWebhook(request, env);
 
       // Book routes
       } else if (path === '/api/books' && method === 'GET') {

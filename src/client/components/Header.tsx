@@ -27,6 +27,7 @@ export default function Header() {
           {user ? (
             <>
               <Link to="/dashboard">My Stories</Link>
+              <Link to="/account">Account</Link>
               <button onClick={logout} className="nav-logout">Sign out</button>
             </>
           ) : (

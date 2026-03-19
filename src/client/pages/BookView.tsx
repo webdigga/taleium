@@ -1,8 +1,10 @@
 import { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
+import { useAuth } from '../context/AuthContext';
 import ChapterCard from '../components/ChapterCard';
 import VisibilityPicker from '../components/VisibilityPicker';
 import ImageWithAttribution from '../components/ImageWithAttribution';
+import UpgradePrompt from '../components/UpgradePrompt';
 
 interface Chapter {
   id: string;
@@ -33,6 +35,7 @@ const AGE_LABELS: Record<string, string> = {
 
 export default function BookView() {
   const { id } = useParams<{ id: string }>();
+  const { user } = useAuth();
   const [book, setBook] = useState<Book | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -78,6 +81,9 @@ export default function BookView() {
     );
   }
 
+  const isFree = user?.subscriptionStatus === 'free' || user?.subscriptionStatus === 'cancelled';
+  const atChapterLimit = isFree && book.chapters.length >= 3;
+
   return (
     <main className="book-view page-container">
       <div className="book-header">
@@ -98,15 +104,21 @@ export default function BookView() {
       </div>
 
       <div className="book-actions">
-        <Link to={`/books/${id}/new-chapter`} className="btn-primary">Add chapter</Link>
+        {!atChapterLimit && (
+          <Link to={`/books/${id}/new-chapter`} className="btn-primary">Add chapter</Link>
+        )}
         {book.chapters.length > 0 && (
           <Link to={`/books/${id}/read`} className="btn-secondary">Read story</Link>
         )}
       </div>
 
+      {atChapterLimit && (
+        <UpgradePrompt message="You've reached 3 chapters on the free plan. Upgrade to keep writing this story." />
+      )}
+
       {book.chapters.length > 0 && (
         <section className="chapters-section">
-          <h2>Chapters</h2>
+          <h2>Chapters{isFree ? ` (${book.chapters.length}/3)` : ''}</h2>
           <div className="chapters-list">
             {book.chapters.map((ch, i) => (
               <ChapterCard

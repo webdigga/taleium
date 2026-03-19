@@ -65,7 +65,7 @@ export async function createUser(
     .bind(id, email.toLowerCase(), passwordHash, salt, displayName, now, now)
     .run();
 
-  return { id, email: email.toLowerCase(), display_name: displayName, created_at: now, updated_at: now };
+  return { id, email: email.toLowerCase(), display_name: displayName, subscription_status: 'free', stripe_customer_id: null, created_at: now, updated_at: now };
 }
 
 export async function verifyPassword(
@@ -74,10 +74,10 @@ export async function verifyPassword(
   password: string,
 ): Promise<User | null> {
   const row = await env.DB.prepare(
-    'SELECT id, email, password_hash, salt, display_name, created_at, updated_at FROM users WHERE email = ?',
+    'SELECT id, email, password_hash, salt, display_name, subscription_status, stripe_customer_id, created_at, updated_at FROM users WHERE email = ?',
   )
     .bind(email.toLowerCase())
-    .first<{ id: string; email: string; password_hash: string; salt: string; display_name: string; created_at: string; updated_at: string }>();
+    .first<{ id: string; email: string; password_hash: string; salt: string; display_name: string; subscription_status: string; stripe_customer_id: string | null; created_at: string; updated_at: string }>();
 
   if (!row) return null;
 
@@ -88,6 +88,8 @@ export async function verifyPassword(
     id: row.id,
     email: row.email,
     display_name: row.display_name,
+    subscription_status: row.subscription_status as User['subscription_status'],
+    stripe_customer_id: row.stripe_customer_id,
     created_at: row.created_at,
     updated_at: row.updated_at,
   };
@@ -114,7 +116,7 @@ export async function createSession(env: Env, userId: string): Promise<Session> 
 
 export async function getSessionUser(env: Env, sessionId: string): Promise<User | null> {
   const row = await env.DB.prepare(
-    `SELECT u.id, u.email, u.display_name, u.created_at, u.updated_at
+    `SELECT u.id, u.email, u.display_name, u.subscription_status, u.stripe_customer_id, u.created_at, u.updated_at
      FROM sessions s JOIN users u ON s.user_id = u.id
      WHERE s.id = ? AND s.expires_at > ?`,
   )

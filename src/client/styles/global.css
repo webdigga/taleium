@@ -1019,6 +1019,226 @@ input, textarea {
   margin-top: 2px;
 }
 
+/* ===== PRICING SECTION ===== */
+.pricing-section {
+  padding: var(--space-4xl) 0;
+  background: var(--color-surface);
+  border-top: 1px solid var(--color-border);
+}
+
+.pricing-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: var(--space-xl);
+  max-width: 640px;
+  margin: 0 auto;
+}
+
+.pricing-card {
+  padding: var(--space-xl);
+  border: 1.5px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  text-align: center;
+  background: var(--color-bg);
+}
+
+.pricing-card-featured {
+  border-color: var(--color-accent);
+  background: white;
+  box-shadow: var(--shadow-md);
+  position: relative;
+}
+
+.pricing-plan {
+  font-family: var(--font-display);
+  font-size: 1.1rem;
+  font-weight: 700;
+  margin-bottom: var(--space-sm);
+}
+
+.pricing-price {
+  font-family: var(--font-display);
+  font-size: 2.5rem;
+  font-weight: 800;
+  color: var(--color-heading);
+  margin-bottom: var(--space-md);
+}
+
+.pricing-period {
+  font-size: 0.88rem;
+  font-weight: 600;
+  color: var(--color-muted);
+}
+
+.pricing-features {
+  list-style: none;
+  margin-bottom: var(--space-xl);
+}
+
+.pricing-features li {
+  padding: var(--space-xs) 0;
+  font-size: 0.88rem;
+  color: var(--color-text);
+}
+
+.pricing-features li + li {
+  border-top: 1px solid var(--color-border);
+}
+
+/* ===== UPGRADE PROMPT ===== */
+.upgrade-prompt {
+  text-align: center;
+  padding: var(--space-xl);
+  background: var(--color-surface);
+  border: 1.5px solid var(--color-secondary);
+  border-radius: var(--radius-lg);
+  max-width: 480px;
+  margin: 0 auto;
+}
+
+.upgrade-icon {
+  color: var(--color-secondary);
+  margin-bottom: var(--space-sm);
+}
+
+.upgrade-message {
+  font-size: 0.92rem;
+  color: var(--color-text);
+  line-height: 1.6;
+  margin-bottom: var(--space-lg);
+}
+
+/* ===== UPGRADE SUCCESS BANNER ===== */
+.upgrade-success {
+  padding: var(--space-md) var(--space-lg);
+  background: rgba(34, 197, 94, 0.08);
+  border: 1px solid rgba(34, 197, 94, 0.25);
+  border-radius: var(--radius-md);
+  color: #166534;
+  font-size: 0.88rem;
+  font-weight: 600;
+  margin-bottom: var(--space-xl);
+  text-align: center;
+}
+
+/* ===== ACCOUNT PAGE ===== */
+.account-page {
+  padding: var(--space-2xl) var(--space-md);
+  max-width: 600px;
+  margin: 0 auto;
+}
+
+.account-title {
+  font-family: var(--font-display);
+  font-size: 2rem;
+  font-weight: 700;
+  margin-bottom: var(--space-2xl);
+  letter-spacing: -0.02em;
+}
+
+.account-section {
+  margin-bottom: var(--space-2xl);
+  padding-bottom: var(--space-xl);
+  border-bottom: 1px solid var(--color-border);
+}
+
+.account-section:last-child {
+  border-bottom: none;
+}
+
+.account-section-title {
+  font-family: var(--font-display);
+  font-size: 1.1rem;
+  font-weight: 700;
+  margin-bottom: var(--space-md);
+}
+
+.account-field {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: var(--space-sm) 0;
+}
+
+.account-label {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--color-muted);
+}
+
+.account-value {
+  font-size: 0.92rem;
+  color: var(--color-text);
+}
+
+.account-loading {
+  font-size: 0.88rem;
+  color: var(--color-muted);
+}
+
+/* Plan cards */
+.plan-card {
+  padding: var(--space-xl);
+  border: 1.5px solid var(--color-border);
+  border-radius: var(--radius-lg);
+}
+
+.plan-card-premium {
+  border-color: var(--color-accent);
+  background: rgba(226, 114, 91, 0.04);
+}
+
+.plan-card-header {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+  margin-bottom: var(--space-sm);
+}
+
+.plan-card-header h3 {
+  font-family: var(--font-display);
+  font-size: 1.2rem;
+  font-weight: 700;
+}
+
+.plan-badge {
+  font-size: 0.68rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  padding: 2px 8px;
+  border-radius: var(--radius-full);
+}
+
+.plan-badge-current {
+  background: var(--color-surface-warm);
+  color: var(--color-muted);
+}
+
+.plan-badge-active {
+  background: rgba(34, 197, 94, 0.1);
+  color: #166534;
+}
+
+.plan-desc {
+  font-size: 0.88rem;
+  color: var(--color-muted);
+  margin-bottom: var(--space-lg);
+}
+
+.plan-period {
+  font-size: 0.82rem;
+  color: var(--color-muted);
+  margin-bottom: var(--space-md);
+}
+
+.plan-warning {
+  font-size: 0.82rem;
+  color: #DC2626;
+  font-weight: 500;
+  margin-bottom: var(--space-md);
+}
+
 /* ===== MOBILE ===== */
 @media (max-width: 767px) {
   .hero-title {
@@ -1049,6 +1269,11 @@ input, textarea {
 
   .home-quote p {
     font-size: 1.15rem;
+  }
+
+  .pricing-grid {
+    grid-template-columns: 1fr;
+    max-width: 340px;
   }
 
   .bottom-cta h2 {

@@ -5,6 +5,7 @@ interface AuthUser {
   id: string;
   email: string;
   displayName: string;
+  subscriptionStatus: 'free' | 'active' | 'past_due' | 'cancelled';
 }
 
 interface AuthContextType {
@@ -13,6 +14,7 @@ interface AuthContextType {
   login: (email: string, password: string) => Promise<void>;
   signup: (email: string, password: string, displayName: string) => Promise<void>;
   logout: () => Promise<void>;
+  refreshUser: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | null>(null);
@@ -32,15 +34,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<AuthUser | null>(null);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    fetch('/api/auth/me', { credentials: 'include' })
-      .then((res) => (res.ok ? res.json() as Promise<AuthResponse> : null))
-      .then((data) => {
-        if (data?.user) setUser(data.user);
-      })
-      .catch(() => {})
-      .finally(() => setLoading(false));
+  const fetchMe = useCallback(async () => {
+    try {
+      const res = await fetch('/api/auth/me', { credentials: 'include' });
+      if (res.ok) {
+        const data = await res.json() as AuthResponse;
+        if (data.user) setUser(data.user);
+      }
+    } catch {}
   }, []);
+
+  useEffect(() => {
+    fetchMe().finally(() => setLoading(false));
+  }, [fetchMe]);
 
   const login = useCallback(async (email: string, password: string) => {
     const res = await fetch('/api/auth/login', {
@@ -71,8 +77,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setUser(null);
   }, []);
 
+  const refreshUser = useCallback(async () => {
+    await fetchMe();
+  }, [fetchMe]);
+
   return (
-    <AuthContext.Provider value={{ user, loading, login, signup, logout }}>
+    <AuthContext.Provider value={{ user, loading, login, signup, logout, refreshUser }}>
       {children}
     </AuthContext.Provider>
   );

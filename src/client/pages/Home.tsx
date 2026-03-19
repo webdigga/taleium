@@ -179,6 +179,36 @@ export default function Home() {
         </section>
       )}
 
+      <section className="pricing-section">
+        <div className="page-container">
+          <h2 className="section-label">Simple pricing</h2>
+          <div className="pricing-grid">
+            <div className="pricing-card">
+              <h3 className="pricing-plan">Free</h3>
+              <p className="pricing-price">$0</p>
+              <ul className="pricing-features">
+                <li>1 book</li>
+                <li>3 chapters per book</li>
+                <li>All reading features</li>
+                <li>Share with anyone</li>
+              </ul>
+              <Link to="/signup" className="btn-secondary btn-lg">Get started</Link>
+            </div>
+            <div className="pricing-card pricing-card-featured">
+              <h3 className="pricing-plan">Premium</h3>
+              <p className="pricing-price">$5<span className="pricing-period">/month</span></p>
+              <ul className="pricing-features">
+                <li>Unlimited books</li>
+                <li>Unlimited chapters</li>
+                <li>All reading features</li>
+                <li>Share with anyone</li>
+              </ul>
+              <Link to="/signup" className="btn-primary btn-lg">Start free, upgrade later</Link>
+            </div>
+          </div>
+        </div>
+      </section>
+
       <section className="bottom-cta">
         <div className="page-container">
           <EmptyBookIllustration />

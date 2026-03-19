@@ -1,9 +1,11 @@
 import type { Env, User } from '../types';
+import { FREE_BOOK_LIMIT, FREE_CHAPTER_LIMIT } from '../types';
 import { getSessionUser, getSessionIdFromCookie } from '../services/auth';
 import { isValidAgeRange, isValidVisibility } from '../utils/validate';
 import {
   createBook,
   getUserBooks,
+  getUserBookCount,
   getBookWithChapters,
   updateBook,
   deleteBook,
@@ -51,6 +53,14 @@ export async function handleCreateBook(request: Request, env: Env, ctx: Executio
   }
   if (!ageRange || !isValidAgeRange(ageRange)) {
     return json({ error: 'Valid age range is required (3-5, 6-8, or 9-12)' }, 400);
+  }
+
+  // Free tier: book limit
+  if (auth.subscription_status === 'free' || auth.subscription_status === 'cancelled') {
+    const count = await getUserBookCount(env, auth.id);
+    if (count >= FREE_BOOK_LIMIT) {
+      return json({ error: 'Free plan allows 1 book. Upgrade for unlimited stories.', code: 'BOOK_LIMIT_REACHED' }, 403);
+    }
   }
 
   const book = await createBook(env, auth.id, title.trim(), ageRange, description?.trim());
@@ -145,6 +155,13 @@ export async function handleCreateChapter(request: Request, env: Env, bookId: st
     return json({ error: 'Prompt is required' }, 400);
   }
 
+  // Free tier: chapter limit
+  if (auth.subscription_status === 'free' || auth.subscription_status === 'cancelled') {
+    if (book.chapters.length >= FREE_CHAPTER_LIMIT) {
+      return json({ error: 'Free plan allows 3 chapters per book. Upgrade for unlimited chapters.', code: 'CHAPTER_LIMIT_REACHED' }, 403);
+    }
+  }
+
   try {
     const generated = await generateChapter(
       book.title,
@@ -170,6 +187,13 @@ export async function handleGetDirections(request: Request, env: Env, bookId: st
   const book = await getBookWithChapters(env, bookId);
   if (!book) return json({ error: 'Book not found' }, 404);
   if (book.user_id !== auth.id) return json({ error: 'Not authorised' }, 403);
+
+  // Free tier: chapter limit (no point suggesting directions if they can't create more)
+  if (auth.subscription_status === 'free' || auth.subscription_status === 'cancelled') {
+    if (book.chapters.length >= FREE_CHAPTER_LIMIT) {
+      return json({ error: 'Free plan allows 3 chapters per book. Upgrade for unlimited chapters.', code: 'CHAPTER_LIMIT_REACHED' }, 403);
+    }
+  }
 
   try {
     const directions = await generateDirections(
@@ -203,6 +227,13 @@ export async function handleCreateChapterFromDirection(
 
   if (!body.direction?.summary || !body.direction?.preview) {
     return json({ error: 'Direction with summary and preview is required' }, 400);
+  }
+
+  // Free tier: chapter limit
+  if (auth.subscription_status === 'free' || auth.subscription_status === 'cancelled') {
+    if (book.chapters.length >= FREE_CHAPTER_LIMIT) {
+      return json({ error: 'Free plan allows 3 chapters per book. Upgrade for unlimited chapters.', code: 'CHAPTER_LIMIT_REACHED' }, 403);
+    }
   }
 
   const prompt = `${body.direction.summary}: ${body.direction.preview}`;

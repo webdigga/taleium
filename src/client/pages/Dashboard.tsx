@@ -1,6 +1,8 @@
 import { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useSearchParams } from 'react-router-dom';
+import { useAuth } from '../context/AuthContext';
 import BookCard from '../components/BookCard';
+import UpgradePrompt from '../components/UpgradePrompt';
 
 interface BookMeta {
   id: string;
@@ -38,8 +40,17 @@ function EmptyShelf() {
 }
 
 export default function Dashboard() {
+  const { user, refreshUser } = useAuth();
   const [books, setBooks] = useState<BookMeta[]>([]);
   const [loading, setLoading] = useState(true);
+  const [searchParams] = useSearchParams();
+  const justUpgraded = searchParams.get('upgraded') === '1';
+
+  useEffect(() => {
+    if (justUpgraded) {
+      refreshUser();
+    }
+  }, [justUpgraded, refreshUser]);
 
   useEffect(() => {
     fetch('/api/books', { credentials: 'include' })
@@ -49,11 +60,20 @@ export default function Dashboard() {
       .finally(() => setLoading(false));
   }, []);
 
+  const isFree = user?.subscriptionStatus === 'free' || user?.subscriptionStatus === 'cancelled';
+  const atBookLimit = isFree && books.length >= 1;
+
   return (
     <main className="dashboard-page page-container">
+      {justUpgraded && (
+        <div className="upgrade-success">Welcome to Premium! You now have unlimited books and chapters.</div>
+      )}
+
       <div className="dashboard-header">
         <h1 className="dashboard-title">My Stories</h1>
-        {books.length > 0 && <Link to="/create" className="btn-primary">New Story</Link>}
+        {books.length > 0 && !atBookLimit && (
+          <Link to="/create" className="btn-primary">New Story</Link>
+        )}
       </div>
 
       {loading && <p className="browse-loading">Loading your stories...</p>}
@@ -61,20 +81,27 @@ export default function Dashboard() {
       {!loading && books.length === 0 && <EmptyShelf />}
 
       {!loading && books.length > 0 && (
-        <div className="books-grid">
-          {books.map((b) => (
-            <BookCard
-              key={b.id}
-              id={b.id}
-              title={b.title}
-              description={b.description}
-              ageRange={b.age_range}
-              chapterCount={b.chapter_count}
-              coverImageUrl={b.cover_image_url}
-              coverImageAttribution={b.cover_image_attribution}
-            />
-          ))}
-        </div>
+        <>
+          <div className="books-grid">
+            {books.map((b) => (
+              <BookCard
+                key={b.id}
+                id={b.id}
+                title={b.title}
+                description={b.description}
+                ageRange={b.age_range}
+                chapterCount={b.chapter_count}
+                coverImageUrl={b.cover_image_url}
+                coverImageAttribution={b.cover_image_attribution}
+              />
+            ))}
+          </div>
+          {atBookLimit && (
+            <div style={{ marginTop: 'var(--space-2xl)' }}>
+              <UpgradePrompt message="You've reached the free plan limit of 1 book. Upgrade to create unlimited stories." />
+            </div>
+          )}
+        </>
       )}
     </main>
   );

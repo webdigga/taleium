@@ -1,8 +1,11 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useAuth } from '../context/AuthContext';
 import AgeRangePicker from '../components/AgeRangePicker';
+import UpgradePrompt from '../components/UpgradePrompt';
 
 export default function CreateBook() {
+  const { user } = useAuth();
   const navigate = useNavigate();
   const [title, setTitle] = useState('');
   const [ageRange, setAgeRange] = useState('6-8');
@@ -10,6 +13,17 @@ export default function CreateBook() {
   const [coverQuery, setCoverQuery] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [bookCount, setBookCount] = useState<number | null>(null);
+
+  useEffect(() => {
+    fetch('/api/books', { credentials: 'include' })
+      .then((res) => res.json() as Promise<{ books: unknown[] }>)
+      .then((data) => setBookCount(data.books?.length || 0))
+      .catch(() => {});
+  }, []);
+
+  const isFree = user?.subscriptionStatus === 'free' || user?.subscriptionStatus === 'cancelled';
+  const atLimit = isFree && bookCount !== null && bookCount >= 1;
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -28,7 +42,7 @@ export default function CreateBook() {
           coverQuery: coverQuery || undefined,
         }),
       });
-      const data = await res.json() as { error?: string; book: { id: string } };
+      const data = await res.json() as { error?: string; code?: string; book: { id: string } };
       if (!res.ok) throw new Error(data.error || 'Failed to create book');
       navigate(`/books/${data.book.id}`);
     } catch (err) {
@@ -36,6 +50,17 @@ export default function CreateBook() {
     } finally {
       setLoading(false);
     }
+  }
+
+  if (atLimit) {
+    return (
+      <main className="create-page page-container">
+        <div className="create-form">
+          <h1 className="create-title">Start a new story</h1>
+          <UpgradePrompt message="You've used your free book. Upgrade to Premium to create unlimited stories." />
+        </div>
+      </main>
+    );
   }
 
   return (

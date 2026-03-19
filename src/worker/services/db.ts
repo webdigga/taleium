@@ -1,4 +1,4 @@
-import type { Env, Book, Chapter, BookWithChapters, AgeRange, Visibility } from '../types';
+import type { Env, Book, Chapter, BookWithChapters, AgeRange, Visibility, User, Subscription, SubscriptionStatus } from '../types';
 
 function generateShareToken(): string {
   const bytes = new Uint8Array(16);
@@ -184,6 +184,88 @@ export async function getBookByShareToken(env: Env, token: string): Promise<Book
 
   return { ...book, chapters: chapters.results };
 }
+
+// ===== SUBSCRIPTIONS =====
+
+export async function getUserBookCount(env: Env, userId: string): Promise<number> {
+  const row = await env.DB.prepare(
+    'SELECT COUNT(*) as count FROM books WHERE user_id = ?',
+  )
+    .bind(userId)
+    .first<{ count: number }>();
+  return row?.count || 0;
+}
+
+export async function updateUserSubscription(
+  env: Env,
+  userId: string,
+  status: SubscriptionStatus,
+  stripeCustomerId?: string,
+): Promise<void> {
+  if (stripeCustomerId) {
+    await env.DB.prepare(
+      'UPDATE users SET subscription_status = ?, stripe_customer_id = ?, updated_at = ? WHERE id = ?',
+    )
+      .bind(status, stripeCustomerId, new Date().toISOString(), userId)
+      .run();
+  } else {
+    await env.DB.prepare(
+      'UPDATE users SET subscription_status = ?, updated_at = ? WHERE id = ?',
+    )
+      .bind(status, new Date().toISOString(), userId)
+      .run();
+  }
+}
+
+export async function upsertSubscription(
+  env: Env,
+  userId: string,
+  stripeSubId: string,
+  stripeCustomerId: string,
+  status: string,
+  periodEnd: string | null,
+  cancelAtPeriodEnd: boolean,
+): Promise<void> {
+  const now = new Date().toISOString();
+  const existing = await env.DB.prepare(
+    'SELECT id FROM subscriptions WHERE stripe_subscription_id = ?',
+  )
+    .bind(stripeSubId)
+    .first<{ id: string }>();
+
+  if (existing) {
+    await env.DB.prepare(
+      'UPDATE subscriptions SET status = ?, current_period_end = ?, cancel_at_period_end = ?, updated_at = ? WHERE id = ?',
+    )
+      .bind(status, periodEnd, cancelAtPeriodEnd ? 1 : 0, now, existing.id)
+      .run();
+  } else {
+    await env.DB.prepare(
+      `INSERT INTO subscriptions (id, user_id, stripe_subscription_id, stripe_customer_id, status, current_period_end, cancel_at_period_end, created_at, updated_at)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+    )
+      .bind(crypto.randomUUID(), userId, stripeSubId, stripeCustomerId, status, periodEnd, cancelAtPeriodEnd ? 1 : 0, now, now)
+      .run();
+  }
+}
+
+export async function getSubscriptionByUserId(env: Env, userId: string): Promise<Subscription | null> {
+  return await env.DB.prepare(
+    'SELECT * FROM subscriptions WHERE user_id = ? ORDER BY created_at DESC LIMIT 1',
+  )
+    .bind(userId)
+    .first<Subscription>();
+}
+
+export async function getUserByStripeCustomerId(env: Env, stripeCustomerId: string): Promise<User | null> {
+  return await env.DB.prepare(
+    'SELECT * FROM users WHERE stripe_customer_id = ?',
+  )
+    .bind(stripeCustomerId)
+    .first<User>();
+}
+
+// ===== PUBLIC =====
 
 export async function getPublicBook(env: Env, bookId: string): Promise<BookWithChapters | null> {
   const book = await env.DB.prepare(

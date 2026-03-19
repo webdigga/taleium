@@ -9,6 +9,7 @@ import {
   setSessionCookie,
   clearSessionCookie,
 } from '../services/auth';
+import { sendSignupNotification } from '../services/email';
 
 const json = (data: unknown, status = 200, headers: Record<string, string> = {}) =>
   new Response(JSON.stringify(data), {
@@ -16,7 +17,16 @@ const json = (data: unknown, status = 200, headers: Record<string, string> = {})
     headers: { 'Content-Type': 'application/json', ...headers },
   });
 
-export async function handleSignup(request: Request, env: Env): Promise<Response> {
+function userPayload(user: { id: string; email: string; display_name: string; subscription_status: string }) {
+  return {
+    id: user.id,
+    email: user.email,
+    displayName: user.display_name,
+    subscriptionStatus: user.subscription_status,
+  };
+}
+
+export async function handleSignup(request: Request, env: Env, ctx: ExecutionContext): Promise<Response> {
   if (request.method !== 'POST') return json({ error: 'Method not allowed' }, 405);
 
   let body: { email?: string; password?: string; displayName?: string };
@@ -42,8 +52,11 @@ export async function handleSignup(request: Request, env: Env): Promise<Response
     const user = await createUser(env, email, password, displayName.trim());
     const session = await createSession(env, user.id);
 
+    // Notify owner of new signup (non-blocking)
+    ctx.waitUntil(sendSignupNotification(env, user.email, user.display_name));
+
     return json(
-      { user: { id: user.id, email: user.email, displayName: user.display_name } },
+      { user: userPayload(user) },
       201,
       { 'Set-Cookie': setSessionCookie(session.id) },
     );
@@ -80,7 +93,7 @@ export async function handleLogin(request: Request, env: Env): Promise<Response>
   const session = await createSession(env, user.id);
 
   return json(
-    { user: { id: user.id, email: user.email, displayName: user.display_name } },
+    { user: userPayload(user) },
     200,
     { 'Set-Cookie': setSessionCookie(session.id) },
   );
@@ -106,5 +119,5 @@ export async function handleMe(request: Request, env: Env): Promise<Response> {
   const user = await getSessionUser(env, sessionId);
   if (!user) return json({ error: 'Not authenticated' }, 401);
 
-  return json({ user: { id: user.id, email: user.email, displayName: user.display_name } });
+  return json({ user: userPayload(user) });
 }
