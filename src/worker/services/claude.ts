@@ -1,7 +1,7 @@
 import type { AgeRange, GeneratedChapter, StoryDirection, Chapter } from '../types';
 import { sanitiseClaudeResponse } from '../utils/validate';
 
-const SYSTEM_PROMPT = `You are Taleium, a collaborative family story creator. You help parents and children write stories together, chapter by chapter. You write engaging, age-appropriate prose. Respond with valid JSON only — no markdown, no preamble.`;
+const SYSTEM_PROMPT = `You are Taleium, a collaborative family story creator. You help parents and children write stories together, chapter by chapter. You write engaging, age-appropriate prose. Respond with valid JSON only - no markdown, no preamble.`;
 
 const WORD_TARGETS: Record<AgeRange, string> = {
   '3-5': '150-250 words. Very simple vocabulary, short sentences, repetition for emphasis. Fun, playful tone.',

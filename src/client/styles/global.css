@@ -461,35 +461,14 @@ input, textarea {
   padding: var(--space-lg);
 }
 
-.step-icon {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 80px;
-  height: 80px;
-  margin: 0 auto var(--space-md);
-  background: var(--color-surface-warm);
-  border-radius: 50%;
-  color: var(--color-heading);
-  transition: all var(--transition-base);
-}
-
-.step-card:hover .step-icon {
-  transform: translateY(-4px);
-  box-shadow: var(--shadow-md);
-}
-
 .step-number {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 24px;
-  height: 24px;
-  border-radius: 50%;
-  background: var(--color-accent);
-  color: white;
-  font-size: 0.72rem;
+  display: block;
+  font-family: var(--font-display);
+  font-size: 3.5rem;
   font-weight: 800;
+  line-height: 1;
+  color: var(--color-accent);
+  opacity: 0.2;
   margin-bottom: var(--space-sm);
 }
 

@@ -1,5 +1,5 @@
 import { getAssetFromKV } from '@cloudflare/kv-asset-handler';
-// @ts-expect-error — injected by wrangler at build time
+// @ts-expect-error - injected by wrangler at build time
 import manifestJSON from '__STATIC_CONTENT_MANIFEST';
 import type { Env } from './types';
 import { handleSignup, handleLogin, handleLogout, handleMe } from './routes/auth';

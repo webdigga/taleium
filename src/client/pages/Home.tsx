@@ -14,40 +14,6 @@ interface BookMeta {
   share_token: string | null;
 }
 
-function IconCreate() {
-  return (
-    <svg width="48" height="48" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
-      <rect x="8" y="6" width="24" height="32" rx="3" stroke="currentColor" strokeWidth="2" fill="none" />
-      <rect x="16" y="10" width="24" height="32" rx="3" stroke="currentColor" strokeWidth="2" fill="var(--color-secondary-light)" />
-      <line x1="22" y1="20" x2="34" y2="20" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
-      <line x1="22" y1="26" x2="32" y2="26" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
-      <line x1="22" y1="32" x2="28" y2="32" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
-    </svg>
-  );
-}
-
-function IconWrite() {
-  return (
-    <svg width="48" height="48" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
-      <path d="M36 8L40 12L22 30L16 32L18 26L36 8Z" stroke="currentColor" strokeWidth="2" strokeLinejoin="round" fill="var(--color-secondary-light)" />
-      <path d="M10 40H38" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
-      <circle cx="14" cy="14" r="2" fill="var(--color-secondary)" opacity="0.6" />
-      <circle cx="38" cy="22" r="1.5" fill="var(--color-secondary)" opacity="0.4" />
-      <circle cx="10" cy="30" r="1" fill="var(--color-secondary)" opacity="0.5" />
-    </svg>
-  );
-}
-
-function IconShare() {
-  return (
-    <svg width="48" height="48" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
-      <path d="M12 18C12 14.686 14.686 12 18 12H30C33.314 12 36 14.686 36 18V34C36 37.314 33.314 40 30 40H18C14.686 40 12 37.314 12 34V18Z" stroke="currentColor" strokeWidth="2" fill="var(--color-secondary-light)" />
-      <path d="M20 24L24 20L28 24" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-      <line x1="24" y1="20" x2="24" y2="32" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
-      <path d="M18 8H30" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
-    </svg>
-  );
-}
 
 function IconAgeRange() {
   return (
@@ -128,7 +94,7 @@ export default function Home() {
           </h1>
           <p className="hero-subtitle">
             A collaborative story creator for families.
-            You dream up the ideas &mdash; Taleium helps bring them to life as beautiful stories.
+            You dream up the ideas - Taleium helps bring them to life as beautiful stories.
           </p>
           <div className="hero-cta">
             <Link to="/signup" className="btn-primary btn-lg">Start creating</Link>
@@ -142,19 +108,16 @@ export default function Home() {
           <h2 className="section-label">How it works</h2>
           <div className="steps-grid">
             <div className="step-card">
-              <div className="step-icon"><IconCreate /></div>
               <span className="step-number">1</span>
               <h3 className="step-title">Create a story</h3>
               <p className="step-desc">Pick a title, choose an age range, and find a cover image. Your book is ready in seconds.</p>
             </div>
             <div className="step-card">
-              <div className="step-icon"><IconWrite /></div>
               <span className="step-number">2</span>
               <h3 className="step-title">Write together</h3>
-              <p className="step-desc">Describe what happens next, or let AI suggest story directions. You choose &mdash; it writes.</p>
+              <p className="step-desc">Describe what happens next, or let AI suggest story directions. You choose - it writes.</p>
             </div>
             <div className="step-card">
-              <div className="step-icon"><IconShare /></div>
               <span className="step-number">3</span>
               <h3 className="step-title">Share &amp; enjoy</h3>
               <p className="step-desc">Read your story aloud together, share it with grandparents, or publish for the community.</p>
@@ -170,7 +133,7 @@ export default function Home() {
             <div className="feature-card">
               <div className="feature-icon"><IconAgeRange /></div>
               <h3>Age-adapted stories</h3>
-              <p>Stories adjust vocabulary and complexity for ages 3&ndash;5, 6&ndash;8, and 9&ndash;12. Every story is age-appropriate.</p>
+              <p>Stories adjust vocabulary and complexity for ages 3-5, 6-8, and 9-12. Every story is age-appropriate.</p>
             </div>
             <div className="feature-card">
               <div className="feature-icon"><IconAI /></div>
@@ -180,7 +143,7 @@ export default function Home() {
             <div className="feature-card">
               <div className="feature-icon"><IconReadAloud /></div>
               <h3>Read aloud built in</h3>
-              <p>Every story has a read-aloud mode with adjustable speed &mdash; perfect for bedtime or reading practice.</p>
+              <p>Every story has a read-aloud mode with adjustable speed - perfect for bedtime or reading practice.</p>
             </div>
           </div>
         </div>
@@ -190,7 +153,7 @@ export default function Home() {
         <div className="page-container">
           <blockquote className="home-quote">
             <p>&ldquo;There is no greater agony than bearing an untold story inside you.&rdquo;</p>
-            <cite>&mdash; Maya Angelou</cite>
+            <cite>- Maya Angelou</cite>
           </blockquote>
         </div>
       </section>

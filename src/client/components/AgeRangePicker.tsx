@@ -4,9 +4,9 @@ interface AgeRangePickerProps {
 }
 
 const options = [
-  { value: '3-5', label: 'Ages 3\u20135', desc: 'Simple & playful' },
-  { value: '6-8', label: 'Ages 6\u20138', desc: 'Adventure & wonder' },
-  { value: '9-12', label: 'Ages 9\u201312', desc: 'Rich & detailed' },
+  { value: '3-5', label: 'Ages 3-5', desc: 'Simple & playful' },
+  { value: '6-8', label: 'Ages 6-8', desc: 'Adventure & wonder' },
+  { value: '9-12', label: 'Ages 9-12', desc: 'Rich & detailed' },
 ];
 
 export default function AgeRangePicker({ selected, onChange }: AgeRangePickerProps) {

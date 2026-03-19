@@ -12,9 +12,9 @@ interface BookCardProps {
 }
 
 const AGE_LABELS: Record<string, string> = {
-  '3-5': 'Ages 3\u20135',
-  '6-8': 'Ages 6\u20138',
-  '9-12': 'Ages 9\u201312',
+  '3-5': 'Ages 3-5',
+  '6-8': 'Ages 6-8',
+  '9-12': 'Ages 9-12',
 };
 
 function BookPlaceholder({ title }: { title: string }) {

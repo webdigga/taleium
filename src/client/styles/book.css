@@ -547,7 +547,7 @@
 }
 
 .reader-chapter {
-  margin-bottom: var(--space-xl);
+  margin-bottom: var(--space-md);
   padding: var(--space-2xl) var(--space-xl);
   background: var(--color-surface);
   border-radius: var(--radius-lg);
@@ -605,7 +605,7 @@
 /* ===== CHAPTER DIVIDER ===== */
 .chapter-divider {
   text-align: center;
-  padding: var(--space-md) 0;
+  padding: var(--space-xs) 0;
 }
 
 /* ===== CHAPTER NAVIGATION ===== */
@@ -630,8 +630,7 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding-top: var(--space-xl);
-  margin-top: var(--space-md);
+  padding-top: var(--space-sm);
 }
 
 .reader-end-label {

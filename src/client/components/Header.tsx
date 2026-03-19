@@ -3,12 +3,11 @@ import { useAuth } from '../context/AuthContext';
 
 function LogoMark() {
   return (
-    <svg width="30" height="30" viewBox="0 0 30 30" fill="none" xmlns="http://www.w3.org/2000/svg" className="logo-svg">
-      <rect x="3" y="5" width="18" height="22" rx="2.5" fill="var(--color-accent)" />
-      <rect x="9" y="3" width="18" height="22" rx="2.5" fill="white" stroke="var(--color-accent)" strokeWidth="1.5" />
-      <line x1="14" y1="10" x2="22" y2="10" stroke="var(--color-accent)" strokeWidth="1.2" strokeLinecap="round" />
-      <line x1="14" y1="14" x2="20" y2="14" stroke="var(--color-accent)" strokeWidth="1.2" strokeLinecap="round" opacity="0.6" />
-      <line x1="14" y1="18" x2="18" y2="18" stroke="var(--color-accent)" strokeWidth="1.2" strokeLinecap="round" opacity="0.3" />
+    <svg width="28" height="28" viewBox="0 0 28 28" fill="none" xmlns="http://www.w3.org/2000/svg" className="logo-svg">
+      <path d="M14 6C11.5 4.5 8 4 5 5V22C8 21 11.5 21.5 14 23C16.5 21.5 20 21 23 22V5C20 4 16.5 4.5 14 6Z" stroke="var(--color-accent)" strokeWidth="1.8" strokeLinejoin="round" fill="rgba(226, 114, 91, 0.15)" />
+      <line x1="14" y1="6" x2="14" y2="23" stroke="var(--color-accent)" strokeWidth="1.5" />
+      <circle cx="21" cy="3" r="1.5" fill="var(--color-secondary)" opacity="0.9" />
+      <circle cx="23.5" cy="6" r="0.8" fill="var(--color-secondary)" opacity="0.5" />
     </svg>
   );
 }
