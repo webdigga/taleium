@@ -88,6 +88,7 @@
   flex-shrink: 0;
   border-radius: var(--radius-lg);
   overflow: hidden;
+  box-shadow: var(--shadow-md);
 }
 
 .book-cover img {
@@ -310,7 +311,7 @@
   min-height: 80px;
   font-family: var(--font-body);
   line-height: 1.6;
-  transition: border-color var(--transition-fast);
+  transition: all var(--transition-fast);
 }
 
 .prompt-textarea:focus {
@@ -335,7 +336,12 @@
 
 .prompt-submit:hover:not(:disabled) {
   background: var(--color-accent-hover);
-  transform: scale(1.03);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(226, 114, 91, 0.25);
+}
+
+.prompt-submit:active:not(:disabled) {
+  transform: translateY(0);
 }
 
 .prompt-submit:disabled {
@@ -536,20 +542,26 @@
   font-size: 2.5rem;
   font-weight: 800;
   text-align: center;
-  margin-bottom: var(--space-3xl);
+  margin-bottom: var(--space-2xl);
   letter-spacing: -0.02em;
 }
 
 .reader-chapter {
-  margin-bottom: var(--space-3xl);
+  margin-bottom: var(--space-xl);
+  padding: var(--space-2xl) var(--space-xl);
+  background: var(--color-surface);
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--color-border);
+  box-shadow: var(--shadow-sm);
 }
 
 .reader-chapter-heading {
   font-size: 1.5rem;
   font-weight: 700;
-  margin-bottom: var(--space-lg);
-  padding-bottom: var(--space-sm);
-  border-bottom: 2px solid var(--color-border);
+  margin-bottom: var(--space-xl);
+  padding-bottom: var(--space-md);
+  border-bottom: none;
+  text-align: center;
 }
 
 .reader-chapter-number {
@@ -557,19 +569,43 @@
   font-size: 0.72rem;
   font-weight: 700;
   text-transform: uppercase;
-  letter-spacing: 0.08em;
+  letter-spacing: 0.12em;
   color: var(--color-accent);
   font-family: var(--font-body);
-  margin-bottom: var(--space-xs);
+  margin-bottom: var(--space-sm);
 }
 
 .reader-chapter-content {
-  font-size: 1.0625rem;
-  line-height: 1.85;
+  font-family: var(--font-heading);
+  font-size: 1.1rem;
+  line-height: 1.9;
+  color: var(--color-text);
 }
 
 .reader-chapter-content p {
-  margin-bottom: var(--space-md);
+  margin-bottom: var(--space-lg);
+}
+
+.reader-chapter-content p:last-child {
+  margin-bottom: 0;
+}
+
+/* Drop cap on first paragraph */
+.reader-chapter-content .first-paragraph::first-letter {
+  float: left;
+  font-family: var(--font-heading);
+  font-size: 3.5rem;
+  font-weight: 700;
+  line-height: 0.8;
+  margin-right: 0.08em;
+  margin-top: 0.05em;
+  color: var(--color-accent);
+}
+
+/* ===== CHAPTER DIVIDER ===== */
+.chapter-divider {
+  text-align: center;
+  padding: var(--space-md) 0;
 }
 
 /* ===== CHAPTER NAVIGATION ===== */
@@ -579,6 +615,10 @@
 }
 
 .reader-page-indicator {
+  display: inline-block;
+  padding: 4px 14px;
+  border-radius: var(--radius-full);
+  background: var(--color-surface-warm);
   font-size: 0.78rem;
   font-weight: 600;
   text-transform: uppercase;
@@ -591,12 +631,12 @@
   justify-content: space-between;
   align-items: center;
   padding-top: var(--space-xl);
-  border-top: 1px solid var(--color-border);
-  margin-top: var(--space-xl);
+  margin-top: var(--space-md);
 }
 
 .reader-end-label {
-  font-size: 0.88rem;
+  font-family: var(--font-heading);
+  font-size: 1rem;
   font-style: italic;
   color: var(--color-muted);
 }
@@ -661,8 +701,16 @@
     font-size: 1.8rem;
   }
 
+  .reader-chapter {
+    padding: var(--space-lg) var(--space-md);
+  }
+
   .reader-chapter-heading {
     font-size: 1.25rem;
+  }
+
+  .reader-chapter-content .first-paragraph::first-letter {
+    font-size: 2.8rem;
   }
 
   .read-actions {

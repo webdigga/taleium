@@ -9,8 +9,26 @@ interface ChapterReaderProps {
   addChapterUrl?: string;
 }
 
-function renderContent(content: string) {
-  return content.split('\n\n').map((para, i) => <p key={i}>{para}</p>);
+function renderContent(content: string, isFirstChapter: boolean) {
+  const paragraphs = content.split('\n\n');
+  return paragraphs.map((para, i) => (
+    <p key={i} className={i === 0 && isFirstChapter ? 'first-paragraph' : undefined}>
+      {para}
+    </p>
+  ));
+}
+
+function ChapterDivider() {
+  return (
+    <div className="chapter-divider" aria-hidden="true">
+      <svg width="80" height="16" viewBox="0 0 80 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <path d="M0 8H30" stroke="var(--color-border)" strokeWidth="1" />
+        <path d="M50 8H80" stroke="var(--color-border)" strokeWidth="1" />
+        <path d="M36 4L40 8L44 4" stroke="var(--color-secondary)" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round" opacity="0.6" />
+        <path d="M36 8L40 12L44 8" stroke="var(--color-secondary)" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round" opacity="0.3" />
+      </svg>
+    </div>
+  );
 }
 
 export default function ChapterReader({ chapters, bookTitle, startIndex = 0, addChapterUrl }: ChapterReaderProps) {
@@ -48,15 +66,19 @@ export default function ChapterReader({ chapters, bookTitle, startIndex = 0, add
 
       <ReadAloudControls chapters={[chapter]} />
 
-      <section className="reader-chapter">
+      <ChapterDivider />
+
+      <article className="reader-chapter">
         <h2 className="reader-chapter-heading">
           <span className="reader-chapter-number">Chapter {chapter.chapter_number}</span>
           {chapter.title}
         </h2>
         <div className="reader-chapter-content">
-          {renderContent(chapter.content)}
+          {renderContent(chapter.content, true)}
         </div>
-      </section>
+      </article>
+
+      <ChapterDivider />
 
       <div className="reader-chapter-nav">
         {!isFirst ? (

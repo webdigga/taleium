@@ -17,6 +17,20 @@ const AGE_LABELS: Record<string, string> = {
   '9-12': 'Ages 9\u201312',
 };
 
+function BookPlaceholder({ title }: { title: string }) {
+  return (
+    <div className="book-card-placeholder">
+      <svg width="40" height="40" viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <rect x="8" y="6" width="16" height="22" rx="2" stroke="currentColor" strokeWidth="1.5" fill="none" opacity="0.3" />
+        <rect x="14" y="4" width="16" height="22" rx="2" stroke="currentColor" strokeWidth="1.5" fill="none" opacity="0.2" />
+        <line x1="18" y1="12" x2="26" y2="12" stroke="currentColor" strokeWidth="1" strokeLinecap="round" opacity="0.2" />
+        <line x1="18" y1="16" x2="24" y2="16" stroke="currentColor" strokeWidth="1" strokeLinecap="round" opacity="0.15" />
+      </svg>
+      <span className="placeholder-title">{title}</span>
+    </div>
+  );
+}
+
 export default function BookCard({
   id,
   title,
@@ -31,9 +45,9 @@ export default function BookCard({
       <Link to={to || `/books/${id}`} className="book-card-link">
         <div className="book-card-cover">
           {coverImageUrl ? (
-            <img src={coverImageUrl} alt="" />
+            <img src={coverImageUrl} alt="" loading="lazy" />
           ) : (
-            <div className="book-card-placeholder" />
+            <BookPlaceholder title={title} />
           )}
         </div>
         <div className="book-card-body">
