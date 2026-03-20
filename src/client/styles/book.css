@@ -455,7 +455,7 @@
 
 .read-aloud-bar {
   position: fixed;
-  bottom: 0;
+  bottom: var(--mobile-nav-height);
   left: 0;
   right: 0;
   background: var(--color-surface);
@@ -463,6 +463,12 @@
   box-shadow: 0 -4px 24px rgba(27, 21, 18, 0.1);
   padding: 10px var(--space-md);
   z-index: 100;
+}
+
+@media (min-width: 768px) {
+  .read-aloud-bar {
+    bottom: 0;
+  }
 }
 
 .read-aloud-controls {

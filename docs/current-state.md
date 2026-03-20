@@ -1,51 +1,53 @@
-# Current State (2026-03-16)
+# Current State (2026-03-19)
 
-## Pivot Complete: Education Articles → Family Story Creator
+## Freemium Payment System Added
 
-Taleium has been pivoted from an AI-powered educational article platform to a **collaborative family story creation tool**. Parents and children sit together, create stories chapter by chapter, and build their own books.
+Taleium now has a freemium model with Stripe subscription billing. Free users get 1 book with 3 chapters. Premium users (£4.99/month) get unlimited books and chapters.
 
 ## What's Working
 
 ### Backend
-- **Auth system** — Email + password signup/login, PBKDF2 hashing (100k iterations, Web Crypto API), HttpOnly session cookies (30 days), session validation
-- **Book CRUD** — Create, list, get, update, delete books with age range, visibility, and cover images
-- **Chapter generation** — AI writes chapters from user prompts, with story context compression (full first + last chapter, excerpts of middle)
-- **Direction suggestions** — AI suggests 2-3 meaningfully different story directions to pick from
-- **Visibility system** — Per-book private/public/shareable-link with auto-generated share tokens
-- **Public/shared routes** — Browse public books, read shared books without auth
-- **Cover images** — Wikimedia Commons integration (reused from education version), resolved in background via `ctx.waitUntil()`
-- **Sitemap** — Updated for public books
+- **Auth system** - Email + password signup/login, PBKDF2 hashing (100k iterations, Web Crypto API), HttpOnly session cookies (30 days), session validation. Auth responses include `subscriptionStatus`.
+- **Book CRUD** - Create, list, get, update, delete books with age range, visibility, and cover images
+- **Chapter generation** - AI writes chapters from user prompts, with story context compression (full first + last chapter, excerpts of middle)
+- **Direction suggestions** - AI suggests 2-3 meaningfully different story directions to pick from
+- **Freemium limits** - Server-side enforcement: 1 book (free), 3 chapters per book (free). Returns `BOOK_LIMIT_REACHED` / `CHAPTER_LIMIT_REACHED` error codes.
+- **Stripe billing** - Checkout sessions, billing portal, webhook handling for subscription lifecycle (created, updated, deleted, payment failed)
+- **Signup notifications** - Owner notified via Resend email on every new signup
+- **Visibility system** - Per-book private/public/shareable-link with auto-generated share tokens
+- **Public/shared routes** - Browse public books, read shared books without auth
+- **Cover images** - Wikimedia Commons integration, resolved in background via `ctx.waitUntil()`
+- **Sitemap** - Updated for public books
 
 ### Frontend
-- **Auth flow** — Sign up, log in, sign out with auth-aware header navigation
-- **Dashboard** — "My Books" grid with book cards showing cover, title, age range, chapter count
-- **Book creation** — Title, description, age range picker, optional cover image search
-- **Book workshop** — Chapter list, add chapter, visibility settings, read story
-- **Story creation** — Write a prompt OR pick from AI-suggested directions, loading animation during generation
-- **Chapter reader** — Sequential reading view with chapter headings and content
-- **Shared/public views** — Read-only views for shared and public books
-- **Browse page** — Public books grid
-- **Mobile-responsive design** — All pages work on mobile
+- **Auth flow** - Sign up, log in, sign out with auth-aware header navigation
+- **Dashboard** - "My Books" grid with book cards. Shows upgrade prompt when at book limit. Success banner after Stripe upgrade.
+- **Book creation** - Title, description, age range picker, optional cover image search. Blocks with upgrade prompt if at book limit.
+- **Book workshop** - Chapter list, add chapter (hidden at limit, replaced with upgrade prompt), visibility settings, read story. Shows chapter count (e.g. "3/3") for free users.
+- **Story creation** - Write a prompt OR pick from AI-suggested directions. Handles CHAPTER_LIMIT_REACHED gracefully with upgrade prompt.
+- **Chapter reader** - Drop cap on first paragraph, serif font (Vollkorn), card-style chapters, decorative SVG dividers, pill-style page indicator
+- **Shared/public views** - Read-only views for shared and public books
+- **Browse page** - Public books grid
+- **Account page** - Profile info, current plan display, upgrade CTA (free) or manage billing button (premium)
+- **Homepage** - Hero, How it Works (3 steps), Features (3 cards), quote section, pricing (Free vs Premium £4.99/mo), community stories, bottom CTA
+- **Upgrade prompt** - Reusable component that creates a Stripe Checkout session and redirects
+- **Mobile-responsive design** - All pages work on mobile
 
-### D1 Schema (migration 002)
-- `users` — id, email, password_hash, salt, display_name, timestamps
-- `sessions` — id, user_id, created_at, expires_at
-- `books` — id, user_id, title, description, age_range, visibility, share_token, cover_image, chapter_count, timestamps
-- `chapters` — id, book_id, chapter_number, title, content, user_prompt, created_at
+### D1 Schema (migration 003)
+- `users` - id, email, password_hash, salt, display_name, subscription_status, stripe_customer_id, timestamps
+- `sessions` - id, user_id, created_at, expires_at
+- `books` - id, user_id, title, description, age_range, visibility, share_token, cover_image, chapter_count, timestamps
+- `chapters` - id, book_id, chapter_number, title, content, user_prompt, created_at
+- `subscriptions` - id, user_id, stripe_subscription_id, stripe_customer_id, status, current_period_end, cancel_at_period_end, timestamps
 
 ## Not Yet Done
 
-### Production Deployment
-- Run migration: `wrangler d1 execute taleium-meta --file=./migrations/002_pivot.sql`
-- Ensure `ANTHROPIC_API_KEY` secret is set: `wrangler secret put ANTHROPIC_API_KEY`
-- Deploy: `npm run deploy`
-
 ### Future Features
-- **Chapter editing/deletion** — Currently chapters can only be added, not edited or removed
-- **Book deletion confirmation** — No confirmation dialog yet
-- **Cover image re-selection** — Can only set cover at creation time
-- **Password reset** — No forgot password flow
-- **Rate limiting** — No rate limiting on auth or generation endpoints
+- **Chapter editing/deletion** - Currently chapters can only be added, not edited or removed
+- **Book deletion confirmation** - No confirmation dialog yet
+- **Cover image re-selection** - Can only set cover at creation time
+- **Password reset** - No forgot password flow
+- **Rate limiting** - No rate limiting on auth or generation endpoints
 
 ## Infrastructure
 
@@ -56,3 +58,6 @@ Taleium has been pivoted from an AI-powered educational article platform to a **
 | D1 Database | `93aeccbf-35ec-4a3b-bc2c-f6fb91bb6a90` | taleium-meta |
 | CF Account | `749e8e915104c226e492df9c5bb31444` | Personal account |
 | API Model | `claude-haiku-4-5-20251001` | Haiku 4.5 for fast chapter generation |
+| Stripe Product | `prod_UAzUkpBPsYkBan` | Taleium Premium |
+| Stripe Price | `price_1TCdVKGVztTSUfuwPCIzEH27` | £4.99/month recurring |
+| Stripe Webhook | `we_1TCdiVGVztTSUfuwj1nasCqa` | 4 events, https://taleium.com/api/billing/webhook |
