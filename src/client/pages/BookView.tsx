@@ -3,7 +3,6 @@ import { useParams, Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import ChapterCard from '../components/ChapterCard';
 import VisibilityPicker from '../components/VisibilityPicker';
-import ImageWithAttribution from '../components/ImageWithAttribution';
 import UpgradePrompt from '../components/UpgradePrompt';
 
 interface Chapter {
@@ -88,12 +87,13 @@ export default function BookView() {
     <main className="book-view page-container">
       <div className="book-header">
         {book.cover_image_url && (
-          <div className="book-cover">
-            <ImageWithAttribution
-              src={book.cover_image_url}
-              alt={book.title}
-              attribution={book.cover_image_attribution || ''}
-            />
+          <div className="book-cover-col">
+            <div className="book-cover">
+              <img src={book.cover_image_url} alt={book.title} />
+            </div>
+            {book.cover_image_attribution && (
+              <small className="image-attribution">{book.cover_image_attribution}</small>
+            )}
           </div>
         )}
         <div className="book-info">

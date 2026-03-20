@@ -1014,9 +1014,15 @@ input, textarea {
 /* ===== IMAGE ATTRIBUTION ===== */
 .image-attribution {
   display: block;
-  font-size: 0.68rem;
+  font-size: 0.62rem;
   color: var(--color-muted);
-  margin-top: 2px;
+  margin-top: var(--space-xs);
+  opacity: 0.6;
+  line-height: 1.4;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 200px;
 }
 
 /* ===== PRICING SECTION ===== */

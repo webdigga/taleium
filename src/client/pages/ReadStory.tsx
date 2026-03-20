@@ -51,7 +51,7 @@ export default function ReadStory() {
 
   return (
     <main className="read-page content-container">
-      <ChapterReader chapters={book.chapters} bookTitle={book.title} startIndex={startChapter} addChapterUrl={atChapterLimit ? undefined : `/books/${id}/new-chapter`} />
+      <ChapterReader chapters={book.chapters} bookTitle={book.title} startIndex={startChapter} addChapterUrl={atChapterLimit ? undefined : `/books/${id}/new-chapter`} atChapterLimit={!!atChapterLimit} />
       <div className="read-actions">
         <Link to={`/books/${id}`} className="btn-secondary">Back to story</Link>
       </div>

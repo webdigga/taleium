@@ -1,12 +1,14 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import ReadAloudControls from './ReadAloudControls';
+import UpgradePrompt from './UpgradePrompt';
 
 interface ChapterReaderProps {
   chapters: Array<{ chapter_number: number; title: string; content: string }>;
   bookTitle: string;
   startIndex?: number;
   addChapterUrl?: string;
+  atChapterLimit?: boolean;
 }
 
 function renderContent(content: string, isFirstChapter: boolean) {
@@ -31,7 +33,7 @@ function ChapterDivider() {
   );
 }
 
-export default function ChapterReader({ chapters, bookTitle, startIndex = 0, addChapterUrl }: ChapterReaderProps) {
+export default function ChapterReader({ chapters, bookTitle, startIndex = 0, addChapterUrl, atChapterLimit }: ChapterReaderProps) {
   const safeStart = Math.max(0, Math.min(startIndex, chapters.length - 1));
   const [currentIndex, setCurrentIndex] = useState(safeStart);
 
@@ -94,10 +96,18 @@ export default function ChapterReader({ chapters, bookTitle, startIndex = 0, add
           </button>
         ) : addChapterUrl ? (
           <Link to={addChapterUrl} className="btn-primary">Continue the story</Link>
+        ) : atChapterLimit ? (
+          <span />
         ) : (
           <span className="reader-end-label">The end</span>
         )}
       </div>
+
+      {isLast && atChapterLimit && (
+        <div style={{ marginTop: 'var(--space-xl)' }}>
+          <UpgradePrompt message="You've reached 3 chapters on the free plan. Upgrade to keep writing this story." />
+        </div>
+      )}
     </div>
   );
 }

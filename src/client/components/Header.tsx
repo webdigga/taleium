@@ -13,7 +13,7 @@ function LogoMark() {
 }
 
 export default function Header() {
-  const { user, logout } = useAuth();
+  const { user, loading, logout } = useAuth();
 
   return (
     <header className="site-header">
@@ -22,7 +22,9 @@ export default function Header() {
           <LogoMark />
           <span className="logo-text">Taleium</span>
         </Link>
-        {user ? (
+        {loading ? (
+          <div className="nav-links" />
+        ) : user ? (
           <div className="nav-links nav-links-auth">
             <Link to="/browse">Browse</Link>
             <Link to="/dashboard">My Stories</Link>

@@ -83,9 +83,12 @@
   margin-bottom: var(--space-xl);
 }
 
-.book-cover {
+.book-cover-col {
   width: 200px;
   flex-shrink: 0;
+}
+
+.book-cover {
   border-radius: var(--radius-lg);
   overflow: hidden;
   box-shadow: var(--shadow-md);
@@ -672,7 +675,7 @@
     gap: var(--space-md);
   }
 
-  .book-cover {
+  .book-cover-col {
     width: 140px;
   }
 
