@@ -130,10 +130,19 @@ export async function handleStripeWebhook(request: Request, env: Env): Promise<R
       const customerId = obj.customer as string;
       const subscriptionId = obj.id as string;
       const status = obj.status as string;
-      const periodEnd = obj.current_period_end
-        ? new Date((obj.current_period_end as number) * 1000).toISOString()
+
+      // current_period_end moved to items in newer Stripe API versions
+      let rawPeriodEnd = obj.current_period_end as number | undefined;
+      if (!rawPeriodEnd) {
+        const items = obj.items as { data?: Array<{ current_period_end?: number }> } | undefined;
+        rawPeriodEnd = items?.data?.[0]?.current_period_end;
+      }
+      const periodEnd = rawPeriodEnd
+        ? new Date(rawPeriodEnd * 1000).toISOString()
         : null;
-      const cancelAtPeriodEnd = obj.cancel_at_period_end as boolean;
+
+      // Stripe uses cancel_at (specific date) or cancel_at_period_end (boolean)
+      const cancelAtPeriodEnd = !!(obj.cancel_at_period_end || obj.cancel_at);
 
       const user = await getUserByStripeCustomerId(env, customerId);
       if (user) {

@@ -69,9 +69,17 @@ export async function getSubscription(
   secretKey: string,
 ): Promise<{ current_period_end: number; cancel_at_period_end: boolean; status: string }> {
   const data = await stripeRequest(`subscriptions/${subscriptionId}`, secretKey);
+
+  // current_period_end moved to items in newer Stripe API versions
+  let periodEnd = data.current_period_end as number | undefined;
+  if (!periodEnd) {
+    const items = data.items as { data?: Array<{ current_period_end?: number }> } | undefined;
+    periodEnd = items?.data?.[0]?.current_period_end;
+  }
+
   return {
-    current_period_end: data.current_period_end as number,
-    cancel_at_period_end: data.cancel_at_period_end as boolean,
+    current_period_end: periodEnd || 0,
+    cancel_at_period_end: !!(data.cancel_at_period_end || data.cancel_at),
     status: data.status as string,
   };
 }
