@@ -1,6 +1,7 @@
 import { Outlet, NavLink, useLocation, Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import InstallPrompt from './InstallPrompt';
+import type { ReactNode } from 'react';
 
 function LogoMark() {
   return (
@@ -13,9 +14,8 @@ function LogoMark() {
   );
 }
 
-export default function AppLayout() {
+export default function AppLayout({ children }: { children?: ReactNode }) {
   const { user, logout } = useAuth();
-  const location = useLocation();
 
   return (
     <div className="app-layout">
@@ -37,7 +37,7 @@ export default function AppLayout() {
 
       {/* Main content */}
       <main className="app-main">
-        <Outlet />
+        {children || <Outlet />}
       </main>
 
       {/* Mobile bottom nav */}

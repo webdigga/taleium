@@ -1,5 +1,5 @@
 import { BrowserRouter, Routes, Route, Outlet } from 'react-router-dom';
-import { AuthProvider } from './context/AuthContext';
+import { AuthProvider, useAuth } from './context/AuthContext';
 import Header from './components/Header';
 import Footer from './components/Footer';
 import AppLayout from './components/AppLayout';
@@ -27,17 +27,34 @@ function PublicLayout() {
   );
 }
 
+function BrowseRoute() {
+  const { user, loading } = useAuth();
+  if (loading) return null;
+  if (user) {
+    return <AppLayout><Browse /></AppLayout>;
+  }
+  return (
+    <>
+      <Header />
+      <Browse />
+      <Footer />
+    </>
+  );
+}
+
 export default function App() {
   return (
     <BrowserRouter>
       <AuthProvider>
         <Routes>
+          {/* Browse: app layout when logged in, public layout when not */}
+          <Route path="/browse" element={<BrowseRoute />} />
+
           {/* Public pages: header + footer */}
           <Route element={<PublicLayout />}>
             <Route path="/" element={<Home />} />
             <Route path="/signup" element={<SignUp />} />
             <Route path="/login" element={<Login />} />
-            <Route path="/browse" element={<Browse />} />
             <Route path="/shared/:token" element={<SharedBook />} />
             <Route path="*" element={<NotFound />} />
           </Route>
