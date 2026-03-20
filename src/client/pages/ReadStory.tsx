@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useParams, useSearchParams, Link } from 'react-router-dom';
+import { useAuth } from '../context/AuthContext';
 import ChapterReader from '../components/ChapterReader';
 
 interface Chapter {
@@ -36,6 +37,10 @@ export default function ReadStory() {
     );
   }
 
+  const { user } = useAuth();
+  const isFree = user?.subscriptionStatus === 'free' || user?.subscriptionStatus === 'cancelled';
+  const atChapterLimit = isFree && book && book.chapters.length >= 3;
+
   if (!book) {
     return (
       <main className="page-container" style={{ padding: '4rem', textAlign: 'center', color: 'var(--color-muted)' }}>
@@ -46,7 +51,7 @@ export default function ReadStory() {
 
   return (
     <main className="read-page content-container">
-      <ChapterReader chapters={book.chapters} bookTitle={book.title} startIndex={startChapter} addChapterUrl={`/books/${id}/new-chapter`} />
+      <ChapterReader chapters={book.chapters} bookTitle={book.title} startIndex={startChapter} addChapterUrl={atChapterLimit ? undefined : `/books/${id}/new-chapter`} />
       <div className="read-actions">
         <Link to={`/books/${id}`} className="btn-secondary">Back to story</Link>
       </div>
