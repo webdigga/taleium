@@ -35,8 +35,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [loading, setLoading] = useState(true);
 
   const fetchMe = useCallback(async () => {
-    // Skip the request if there's no session cookie - avoids a 401 in the console
-    if (!document.cookie.includes('session=')) return;
     try {
       const res = await fetch('/api/auth/me', { credentials: 'include' });
       if (!res.ok) return;
