@@ -64,6 +64,18 @@ export async function createBillingPortalSession(
   return data.url as string;
 }
 
+export async function getSubscription(
+  subscriptionId: string,
+  secretKey: string,
+): Promise<{ current_period_end: number; cancel_at_period_end: boolean; status: string }> {
+  const data = await stripeRequest(`subscriptions/${subscriptionId}`, secretKey);
+  return {
+    current_period_end: data.current_period_end as number,
+    cancel_at_period_end: data.cancel_at_period_end as boolean,
+    status: data.status as string,
+  };
+}
+
 export async function verifyWebhookSignature(
   payload: string,
   sigHeader: string,

@@ -4,6 +4,7 @@ import {
   createCustomer,
   createCheckoutSession,
   createBillingPortalSession,
+  getSubscription,
   verifyWebhookSignature,
 } from '../services/stripe';
 import {
@@ -108,8 +109,10 @@ export async function handleStripeWebhook(request: Request, env: Env): Promise<R
       const subscriptionId = obj.subscription as string;
       const user = await getUserByStripeCustomerId(env, customerId);
       if (user) {
+        const sub = await getSubscription(subscriptionId, env.STRIPE_SECRET_KEY);
+        const periodEnd = new Date(sub.current_period_end * 1000).toISOString();
         await updateUserSubscription(env, user.id, 'active');
-        await upsertSubscription(env, user.id, subscriptionId, customerId, 'active', null, false);
+        await upsertSubscription(env, user.id, subscriptionId, customerId, 'active', periodEnd, false);
       }
       break;
     }
