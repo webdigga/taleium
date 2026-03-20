@@ -22,21 +22,20 @@ export default function Header() {
           <LogoMark />
           <span className="logo-text">Taleium</span>
         </Link>
-        <div className="nav-links">
-          <Link to="/browse">Browse</Link>
-          {user ? (
-            <>
-              <Link to="/dashboard">My Stories</Link>
-              <Link to="/account">Account</Link>
-              <button onClick={logout} className="nav-logout">Sign out</button>
-            </>
-          ) : (
-            <>
-              <Link to="/login">Sign in</Link>
-              <Link to="/signup" className="nav-cta">Get started</Link>
-            </>
-          )}
-        </div>
+        {user ? (
+          <div className="nav-links nav-links-auth">
+            <Link to="/browse">Browse</Link>
+            <Link to="/dashboard">My Stories</Link>
+            <Link to="/account">Account</Link>
+            <button onClick={logout} className="nav-logout">Sign out</button>
+          </div>
+        ) : (
+          <div className="nav-links">
+            <Link to="/browse">Browse</Link>
+            <Link to="/login">Sign in</Link>
+            <Link to="/signup" className="nav-cta">Get started</Link>
+          </div>
+        )}
       </nav>
     </header>
   );

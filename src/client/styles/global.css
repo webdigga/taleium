@@ -1247,60 +1247,7 @@ input, textarea {
   margin-bottom: var(--space-md);
 }
 
-/* ===== APP LAYOUT (authenticated pages) ===== */
-.app-layout {
-  min-height: 100dvh;
-  display: flex;
-  flex-direction: column;
-}
-
-.app-header {
-  background: var(--color-bg-hero);
-  position: sticky;
-  top: 0;
-  z-index: 50;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
-}
-
-.app-header-inner {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  height: 60px;
-}
-
-.app-header-nav {
-  display: flex;
-  align-items: center;
-  gap: var(--space-sm);
-}
-
-.app-nav-link {
-  font-size: 0.85rem;
-  font-weight: 600;
-  color: var(--color-muted-on-dark);
-  padding: 6px 14px;
-  border-radius: var(--radius-full);
-  transition: all var(--transition-fast);
-  text-decoration: none;
-}
-
-.app-nav-link:hover {
-  color: white;
-  background: rgba(255, 255, 255, 0.08);
-}
-
-.app-nav-link.active {
-  color: white;
-  background: rgba(255, 255, 255, 0.12);
-}
-
-.app-main {
-  flex: 1;
-  padding-bottom: calc(var(--mobile-nav-height) + 1rem);
-}
-
-/* Mobile bottom nav */
+/* ===== MOBILE BOTTOM NAV ===== */
 .mobile-nav {
   position: fixed;
   bottom: 0;
@@ -1402,14 +1349,10 @@ input, textarea {
   padding: 0.25rem;
 }
 
-/* Desktop: hide mobile nav, remove bottom padding */
+/* Desktop: hide mobile nav */
 @media (min-width: 768px) {
   .mobile-nav {
     display: none;
-  }
-
-  .app-main {
-    padding-bottom: 0;
   }
 
   .install-banner {
@@ -1420,15 +1363,21 @@ input, textarea {
   }
 }
 
-/* Mobile: hide desktop nav in app layout */
-@media (max-width: 767px) {
-  .app-header-nav {
-    display: none;
-  }
-}
-
 /* ===== MOBILE ===== */
 @media (max-width: 767px) {
+  /* When logged in: hide header nav links (bottom nav handles it), hide footer */
+  .nav-links-auth {
+    display: none;
+  }
+
+  .site-footer-auth {
+    display: none;
+  }
+
+  /* Add bottom padding when mobile nav is present (logged in) */
+  .has-mobile-nav {
+    padding-bottom: var(--mobile-nav-height);
+  }
   .hero-title {
     font-size: 2.2rem;
   }

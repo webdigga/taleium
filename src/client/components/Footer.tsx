@@ -5,7 +5,7 @@ export default function Footer() {
   const { user } = useAuth();
 
   return (
-    <footer className="site-footer">
+    <footer className={`site-footer${user ? ' site-footer-auth' : ''}`}>
       <div className="page-container footer-inner">
         <div className="footer-grid">
           <div className="footer-brand-col">
