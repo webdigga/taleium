@@ -109,8 +109,13 @@ export async function handleStripeWebhook(request: Request, env: Env): Promise<R
       const subscriptionId = obj.subscription as string;
       const user = await getUserByStripeCustomerId(env, customerId);
       if (user) {
-        const sub = await getSubscription(subscriptionId, env.STRIPE_SECRET_KEY);
-        const periodEnd = new Date(sub.current_period_end * 1000).toISOString();
+        let periodEnd: string | null = null;
+        try {
+          const sub = await getSubscription(subscriptionId, env.STRIPE_SECRET_KEY);
+          periodEnd = new Date(sub.current_period_end * 1000).toISOString();
+        } catch {
+          // Period end will be populated by the subscription.updated webhook
+        }
         await updateUserSubscription(env, user.id, 'active');
         await upsertSubscription(env, user.id, subscriptionId, customerId, 'active', periodEnd, false);
       }
