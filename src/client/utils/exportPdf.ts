@@ -96,6 +96,9 @@ export function exportBookAsPdf({ title, description, chapters }: ExportOptions)
           doc.addPage();
           pageNum++;
           y = MARGIN_TOP;
+          doc.setFont('helvetica', 'normal');
+          doc.setFontSize(11);
+          doc.setTextColor(58, 51, 48);
         }
         doc.text(line, MARGIN_X, y);
         y += 6;
