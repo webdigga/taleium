@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useParams, Link } from 'react-router-dom';
+import { useParams, Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import ChapterCard from '../components/ChapterCard';
 import VisibilityPicker from '../components/VisibilityPicker';
@@ -30,6 +30,12 @@ interface Book {
   chapters: Chapter[];
 }
 
+interface CharacterMeta {
+  id: string;
+  name: string;
+  avatar_url: string | null;
+}
+
 const AGE_LABELS: Record<string, string> = {
   '3-5': 'Ages 3-5',
   '6-8': 'Ages 6-8',
@@ -39,20 +45,47 @@ const AGE_LABELS: Record<string, string> = {
 export default function BookView() {
   const { id } = useParams<{ id: string }>();
   const { user } = useAuth();
+  const navigate = useNavigate();
   const [book, setBook] = useState<Book | null>(null);
+  const [bookCharacters, setBookCharacters] = useState<CharacterMeta[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [deleting, setDeleting] = useState(false);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
 
   useEffect(() => {
-    fetch(`/api/books/${id}`, { credentials: 'include' })
-      .then((res) => {
-        if (!res.ok) throw new Error('Failed to load book');
-        return res.json() as Promise<{ book: Book }>;
+    Promise.all([
+      fetch(`/api/books/${id}`, { credentials: 'include' })
+        .then((res) => {
+          if (!res.ok) throw new Error('Failed to load book');
+          return res.json() as Promise<{ book: Book }>;
+        }),
+      fetch(`/api/books/${id}/characters`, { credentials: 'include' })
+        .then((res) => res.ok ? res.json() as Promise<{ characters: CharacterMeta[] }> : { characters: [] })
+        .catch(() => ({ characters: [] as CharacterMeta[] })),
+    ])
+      .then(([bookData, charData]) => {
+        setBook(bookData.book);
+        setBookCharacters(charData.characters);
       })
-      .then((data) => setBook(data.book))
       .catch((err) => setError(err.message))
       .finally(() => setLoading(false));
   }, [id]);
+
+  async function handleDelete() {
+    setDeleting(true);
+    try {
+      const res = await fetch(`/api/books/${id}`, {
+        method: 'DELETE',
+        credentials: 'include',
+      });
+      if (res.ok) {
+        navigate('/dashboard');
+      }
+    } catch {} finally {
+      setDeleting(false);
+    }
+  }
 
   async function handleVisibilityChange(visibility: string) {
     const res = await fetch(`/api/books/${id}`, {
@@ -149,6 +182,7 @@ export default function BookView() {
                 chapterIndex={i}
                 title={ch.title}
                 content={ch.content}
+                characters={bookCharacters}
               />
             ))}
           </div>
@@ -176,6 +210,27 @@ export default function BookView() {
           shareToken={book.share_token}
           onChange={handleVisibilityChange}
         />
+      </section>
+
+      <section className="book-settings book-danger-zone">
+        <h2>Delete story</h2>
+        {!showDeleteConfirm ? (
+          <button className="btn-danger" onClick={() => setShowDeleteConfirm(true)}>
+            Delete this story
+          </button>
+        ) : (
+          <div className="delete-confirm">
+            <p>Are you sure you want to delete <strong>{book.title}</strong>? This will permanently remove the story and all its chapters. This cannot be undone.</p>
+            <div className="delete-confirm-actions">
+              <button className="btn-danger" onClick={handleDelete} disabled={deleting}>
+                {deleting ? 'Deleting...' : 'Yes, delete it'}
+              </button>
+              <button className="btn-secondary" onClick={() => setShowDeleteConfirm(false)} disabled={deleting}>
+                Cancel
+              </button>
+            </div>
+          </div>
+        )}
       </section>
     </main>
   );

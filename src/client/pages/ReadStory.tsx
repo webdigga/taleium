@@ -14,17 +14,32 @@ interface Book {
   chapters: Chapter[];
 }
 
+interface CharacterMeta {
+  id: string;
+  name: string;
+  avatar_url: string | null;
+}
+
 export default function ReadStory() {
   const { id } = useParams<{ id: string }>();
   const [searchParams] = useSearchParams();
   const startChapter = parseInt(searchParams.get('ch') || '0', 10);
   const [book, setBook] = useState<Book | null>(null);
+  const [bookCharacters, setBookCharacters] = useState<CharacterMeta[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    fetch(`/api/books/${id}`, { credentials: 'include' })
-      .then((res) => res.json() as Promise<{ book: Book }>)
-      .then((data) => setBook(data.book))
+    Promise.all([
+      fetch(`/api/books/${id}`, { credentials: 'include' })
+        .then((res) => res.json() as Promise<{ book: Book }>),
+      fetch(`/api/books/${id}/characters`, { credentials: 'include' })
+        .then((res) => res.ok ? res.json() as Promise<{ characters: CharacterMeta[] }> : { characters: [] })
+        .catch(() => ({ characters: [] as CharacterMeta[] })),
+    ])
+      .then(([bookData, charData]) => {
+        setBook(bookData.book);
+        setBookCharacters(charData.characters);
+      })
       .catch(() => {})
       .finally(() => setLoading(false));
   }, [id]);
@@ -51,7 +66,7 @@ export default function ReadStory() {
 
   return (
     <main className="read-page content-container">
-      <ChapterReader chapters={book.chapters} bookTitle={book.title} startIndex={startChapter} addChapterUrl={atChapterLimit ? undefined : `/books/${id}/new-chapter`} atChapterLimit={!!atChapterLimit} />
+      <ChapterReader chapters={book.chapters} bookTitle={book.title} startIndex={startChapter} addChapterUrl={atChapterLimit ? undefined : `/books/${id}/new-chapter`} atChapterLimit={!!atChapterLimit} characters={bookCharacters} />
       <div className="read-actions">
         <Link to={`/books/${id}`} className="btn-secondary">Back to story</Link>
       </div>

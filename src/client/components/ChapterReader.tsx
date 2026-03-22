@@ -3,12 +3,24 @@ import { Link } from 'react-router-dom';
 import ReadAloudControls from './ReadAloudControls';
 import UpgradePrompt from './UpgradePrompt';
 
+interface CharacterMeta {
+  id: string;
+  name: string;
+  avatar_url: string | null;
+}
+
 interface ChapterReaderProps {
   chapters: Array<{ chapter_number: number; title: string; content: string }>;
   bookTitle: string;
   startIndex?: number;
   addChapterUrl?: string;
   atChapterLimit?: boolean;
+  characters?: CharacterMeta[];
+}
+
+function findChapterCharacters(content: string, characters: CharacterMeta[]): CharacterMeta[] {
+  const lower = content.toLowerCase();
+  return characters.filter((c) => lower.includes(c.name.toLowerCase()));
 }
 
 function renderContent(content: string, isFirstChapter: boolean) {
@@ -33,7 +45,7 @@ function ChapterDivider() {
   );
 }
 
-export default function ChapterReader({ chapters, bookTitle, startIndex = 0, addChapterUrl, atChapterLimit }: ChapterReaderProps) {
+export default function ChapterReader({ chapters, bookTitle, startIndex = 0, addChapterUrl, atChapterLimit, characters = [] }: ChapterReaderProps) {
   const safeStart = Math.max(0, Math.min(startIndex, chapters.length - 1));
   const [currentIndex, setCurrentIndex] = useState(safeStart);
 
@@ -75,6 +87,24 @@ export default function ChapterReader({ chapters, bookTitle, startIndex = 0, add
           <span className="reader-chapter-number">Chapter {chapter.chapter_number}</span>
           {chapter.title}
         </h2>
+        {(() => {
+          const appearing = findChapterCharacters(chapter.content, characters);
+          if (appearing.length === 0) return null;
+          return (
+            <div className="reader-chapter-characters">
+              {appearing.map((c) => (
+                <span key={c.id} className="reader-char" title={c.name}>
+                  {c.avatar_url ? (
+                    <img src={c.avatar_url} alt={c.name} className="reader-char-img" />
+                  ) : (
+                    <span className="reader-char-initial">{c.name.charAt(0).toUpperCase()}</span>
+                  )}
+                  <span className="reader-char-name">{c.name}</span>
+                </span>
+              ))}
+            </div>
+          );
+        })()}
         <div className="reader-chapter-content">
           {renderContent(chapter.content, true)}
         </div>
