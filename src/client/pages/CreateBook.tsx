@@ -5,6 +5,12 @@ import AgeRangePicker from '../components/AgeRangePicker';
 import GenrePicker from '../components/GenrePicker';
 import UpgradePrompt from '../components/UpgradePrompt';
 
+interface Character {
+  id: string;
+  name: string;
+  avatar_url: string | null;
+}
+
 export default function CreateBook() {
   const { user } = useAuth();
   const navigate = useNavigate();
@@ -13,9 +19,15 @@ export default function CreateBook() {
   const [genre, setGenre] = useState('');
   const [description, setDescription] = useState('');
   const [coverPrompt, setCoverPrompt] = useState('');
+  const [selectedCharIds, setSelectedCharIds] = useState<Set<string>>(new Set());
+  const [characters, setCharacters] = useState<Character[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [bookCount, setBookCount] = useState<number | null>(null);
+
+  const isFree = user?.subscriptionStatus === 'free' || user?.subscriptionStatus === 'cancelled';
+  const isPremium = !isFree;
+  const atLimit = isFree && bookCount !== null && bookCount >= 1;
 
   useEffect(() => {
     fetch('/api/books', { credentials: 'include' })
@@ -24,9 +36,22 @@ export default function CreateBook() {
       .catch(() => {});
   }, []);
 
-  const isFree = user?.subscriptionStatus === 'free' || user?.subscriptionStatus === 'cancelled';
-  const isPremium = !isFree;
-  const atLimit = isFree && bookCount !== null && bookCount >= 1;
+  useEffect(() => {
+    if (!isPremium) return;
+    fetch('/api/characters', { credentials: 'include' })
+      .then((res) => res.json() as Promise<{ characters: Character[] }>)
+      .then((data) => setCharacters(data.characters || []))
+      .catch(() => {});
+  }, [isPremium]);
+
+  function toggleCharacter(id: string) {
+    setSelectedCharIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  }
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -48,6 +73,17 @@ export default function CreateBook() {
       });
       const data = await res.json() as { error?: string; code?: string; book: { id: string } };
       if (!res.ok) throw new Error(data.error || 'Failed to create book');
+
+      // Link selected characters to the book
+      if (selectedCharIds.size > 0) {
+        await fetch(`/api/books/${data.book.id}/characters`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          credentials: 'include',
+          body: JSON.stringify({ characterIds: [...selectedCharIds] }),
+        });
+      }
+
       navigate(`/books/${data.book.id}`);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Something went wrong');
@@ -99,6 +135,35 @@ export default function CreateBook() {
 
         {isPremium && (
           <GenrePicker selected={genre} onChange={setGenre} />
+        )}
+
+        {isPremium && characters.length > 0 && (
+          <fieldset className="genre-picker">
+            <legend className="genre-picker-legend">Characters <span className="premium-badge">Premium</span></legend>
+            <div className="char-picker-grid">
+              {characters.map((c) => {
+                const selected = selectedCharIds.has(c.id);
+                return (
+                  <button
+                    key={c.id}
+                    type="button"
+                    className={`char-picker-item ${selected ? 'active' : ''}`}
+                    onClick={() => toggleCharacter(c.id)}
+                  >
+                    <div className="char-picker-avatar">
+                      {c.avatar_url ? (
+                        <img src={c.avatar_url} alt={c.name} />
+                      ) : (
+                        <span className="char-picker-initial">{c.name.charAt(0).toUpperCase()}</span>
+                      )}
+                    </div>
+                    <span className="char-picker-name">{c.name}</span>
+                    {selected && <span className="char-picker-check" aria-label="Selected">&#10003;</span>}
+                  </button>
+                );
+              })}
+            </div>
+          </fieldset>
         )}
 
         <label className="auth-field">
