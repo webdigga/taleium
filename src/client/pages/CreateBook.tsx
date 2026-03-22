@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import AgeRangePicker from '../components/AgeRangePicker';
+import GenrePicker from '../components/GenrePicker';
 import UpgradePrompt from '../components/UpgradePrompt';
 
 export default function CreateBook() {
@@ -9,6 +10,7 @@ export default function CreateBook() {
   const navigate = useNavigate();
   const [title, setTitle] = useState('');
   const [ageRange, setAgeRange] = useState('6-8');
+  const [genre, setGenre] = useState('');
   const [description, setDescription] = useState('');
   const [coverQuery, setCoverQuery] = useState('');
   const [loading, setLoading] = useState(false);
@@ -23,6 +25,7 @@ export default function CreateBook() {
   }, []);
 
   const isFree = user?.subscriptionStatus === 'free' || user?.subscriptionStatus === 'cancelled';
+  const isPremium = !isFree;
   const atLimit = isFree && bookCount !== null && bookCount >= 1;
 
   async function handleSubmit(e: React.FormEvent) {
@@ -38,6 +41,7 @@ export default function CreateBook() {
         body: JSON.stringify({
           title,
           ageRange,
+          genre: genre || undefined,
           description: description || undefined,
           coverQuery: coverQuery || undefined,
         }),
@@ -92,6 +96,10 @@ export default function CreateBook() {
         </label>
 
         <AgeRangePicker selected={ageRange} onChange={setAgeRange} />
+
+        {isPremium && (
+          <GenrePicker selected={genre} onChange={setGenre} />
+        )}
 
         <label className="auth-field">
           <span>Cover image search (optional)</span>

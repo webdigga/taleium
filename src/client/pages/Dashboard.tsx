@@ -9,6 +9,7 @@ interface BookMeta {
   title: string;
   description: string | null;
   age_range: string;
+  genre: string | null;
   chapter_count: number;
   cover_image_url: string | null;
   cover_image_attribution: string | null;
@@ -66,7 +67,7 @@ export default function Dashboard() {
   return (
     <main className="dashboard-page page-container">
       {justUpgraded && (
-        <div className="upgrade-success">Welcome to Premium! You now have unlimited books and chapters.</div>
+        <div className="upgrade-success">Welcome to Premium! You now have unlimited books and chapters, story genres, and PDF downloads.</div>
       )}
 
       <div className="dashboard-header">
@@ -90,6 +91,7 @@ export default function Dashboard() {
                 title={b.title}
                 description={b.description}
                 ageRange={b.age_range}
+                genre={b.genre}
                 chapterCount={b.chapter_count}
                 coverImageUrl={b.cover_image_url}
                 coverImageAttribution={b.cover_image_attribution}

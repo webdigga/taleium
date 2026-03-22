@@ -1,10 +1,12 @@
 import { Link } from 'react-router-dom';
+import { GENRE_LABELS } from './GenrePicker';
 
 interface BookCardProps {
   id: string;
   title: string;
   description: string | null;
   ageRange: string;
+  genre?: string | null;
   chapterCount: number;
   coverImageUrl: string | null;
   coverImageAttribution: string | null;
@@ -36,6 +38,7 @@ export default function BookCard({
   title,
   description,
   ageRange,
+  genre,
   chapterCount,
   coverImageUrl,
   to,
@@ -51,7 +54,10 @@ export default function BookCard({
           )}
         </div>
         <div className="book-card-body">
-          <span className={`badge badge-age age-${ageRange}`}>{AGE_LABELS[ageRange] || ageRange}</span>
+          <div className="book-card-badges">
+            <span className={`badge badge-age age-${ageRange}`}>{AGE_LABELS[ageRange] || ageRange}</span>
+            {genre && <span className="badge badge-genre">{GENRE_LABELS[genre] || genre}</span>}
+          </div>
           <h3 className="book-card-title">{title}</h3>
           {description && <p className="book-card-desc">{description}</p>}
           <span className="book-card-chapters">

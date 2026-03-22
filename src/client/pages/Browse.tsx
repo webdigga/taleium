@@ -6,6 +6,7 @@ interface BookMeta {
   title: string;
   description: string | null;
   age_range: string;
+  genre: string | null;
   chapter_count: number;
   cover_image_url: string | null;
   cover_image_attribution: string | null;
@@ -45,6 +46,7 @@ export default function Browse() {
               title={b.title}
               description={b.description}
               ageRange={b.age_range}
+              genre={b.genre}
               chapterCount={b.chapter_count}
               coverImageUrl={b.cover_image_url}
               coverImageAttribution={b.cover_image_attribution}

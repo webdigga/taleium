@@ -1,4 +1,4 @@
-import type { Env, Book, Chapter, BookWithChapters, AgeRange, Visibility, User, Subscription, SubscriptionStatus } from '../types';
+import type { Env, Book, Chapter, BookWithChapters, AgeRange, Genre, Visibility, User, Subscription, SubscriptionStatus } from '../types';
 
 function generateShareToken(): string {
   const bytes = new Uint8Array(16);
@@ -14,6 +14,7 @@ export async function createBook(
   title: string,
   ageRange: AgeRange,
   description?: string,
+  genre?: Genre,
   coverImageUrl?: string,
   coverImageAttribution?: string,
 ): Promise<Book> {
@@ -21,10 +22,10 @@ export async function createBook(
   const now = new Date().toISOString();
 
   await env.DB.prepare(
-    `INSERT INTO books (id, user_id, title, description, age_range, visibility, cover_image_url, cover_image_attribution, chapter_count, created_at, updated_at)
-     VALUES (?, ?, ?, ?, ?, 'private', ?, ?, 0, ?, ?)`,
+    `INSERT INTO books (id, user_id, title, description, age_range, genre, visibility, cover_image_url, cover_image_attribution, chapter_count, created_at, updated_at)
+     VALUES (?, ?, ?, ?, ?, ?, 'private', ?, ?, 0, ?, ?)`,
   )
-    .bind(id, userId, title, description || null, ageRange, coverImageUrl || null, coverImageAttribution || null, now, now)
+    .bind(id, userId, title, description || null, ageRange, genre || null, coverImageUrl || null, coverImageAttribution || null, now, now)
     .run();
 
   return {
@@ -33,6 +34,7 @@ export async function createBook(
     title,
     description: description || null,
     age_range: ageRange,
+    genre: genre || null,
     visibility: 'private' as Visibility,
     share_token: null,
     cover_image_url: coverImageUrl || null,

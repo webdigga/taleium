@@ -4,6 +4,8 @@ import { useAuth } from '../context/AuthContext';
 import ChapterCard from '../components/ChapterCard';
 import VisibilityPicker from '../components/VisibilityPicker';
 import UpgradePrompt from '../components/UpgradePrompt';
+import { GENRE_LABELS } from '../components/GenrePicker';
+import { exportBookAsPdf } from '../utils/exportPdf';
 
 interface Chapter {
   id: string;
@@ -18,6 +20,7 @@ interface Book {
   title: string;
   description: string | null;
   age_range: string;
+  genre: string | null;
   visibility: string;
   share_token: string | null;
   cover_image_url: string | null;
@@ -97,7 +100,10 @@ export default function BookView() {
           </div>
         )}
         <div className="book-info">
-          <span className={`badge badge-age age-${book.age_range}`}>{AGE_LABELS[book.age_range] || book.age_range}</span>
+          <div className="book-badges">
+            <span className={`badge badge-age age-${book.age_range}`}>{AGE_LABELS[book.age_range] || book.age_range}</span>
+            {book.genre && <span className="badge badge-genre">{GENRE_LABELS[book.genre] || book.genre}</span>}
+          </div>
           <h1 className="book-title">{book.title}</h1>
           {book.description && <p className="book-description">{book.description}</p>}
         </div>
@@ -109,6 +115,20 @@ export default function BookView() {
         )}
         {book.chapters.length > 0 && (
           <Link to={`/books/${id}/read`} className="btn-secondary">Read story</Link>
+        )}
+        {!isFree && book.chapters.length > 0 && (
+          <button
+            className="btn-secondary"
+            onClick={() => exportBookAsPdf({
+              title: book.title,
+              description: book.description,
+              ageRange: book.age_range,
+              genre: book.genre,
+              chapters: book.chapters,
+            })}
+          >
+            Download PDF
+          </button>
         )}
       </div>
 

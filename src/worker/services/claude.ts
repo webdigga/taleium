@@ -1,4 +1,4 @@
-import type { AgeRange, GeneratedChapter, StoryDirection, Chapter } from '../types';
+import type { AgeRange, Genre, GeneratedChapter, StoryDirection, Chapter } from '../types';
 import { sanitiseClaudeResponse } from '../utils/validate';
 
 const SYSTEM_PROMPT = `You are Taleium, a collaborative family story creator. You help parents and children write stories together, chapter by chapter. You write engaging, age-appropriate prose. Always use British English spelling (colour, favourite, realised, centre, etc.). Respond with valid JSON only - no markdown, no preamble.`;
@@ -7,6 +7,17 @@ const WORD_TARGETS: Record<AgeRange, string> = {
   '3-5': '150-250 words. Very simple vocabulary, short sentences, repetition for emphasis. Fun, playful tone.',
   '6-8': '250-400 words. Clear vocabulary with occasional interesting words. Adventure and wonder. Dialogue encouraged.',
   '9-12': '400-600 words. Richer vocabulary, more complex sentences. Deeper emotions and themes. Plot twists welcome.',
+};
+
+const GENRE_PROMPTS: Record<Genre, string> = {
+  'adventure': 'Action-packed adventure with brave heroes, exciting quests, and thrilling escapes.',
+  'fantasy': 'Magical fantasy with enchanted worlds, mythical creatures, and wondrous powers.',
+  'mystery': 'Intriguing mystery with clues to follow, puzzles to solve, and surprising reveals.',
+  'sci-fi': 'Science fiction with futuristic technology, space exploration, or inventions gone wild.',
+  'fairy-tale': 'Classic fairy-tale style with enchantment, moral lessons, and "once upon a time" magic.',
+  'animal': 'Animal story with charming animal characters who have distinct personalities and go on journeys.',
+  'funny': 'Humorous and silly with jokes, wordplay, absurd situations, and laugh-out-loud moments.',
+  'spooky': 'Mildly spooky and atmospheric with mysterious settings and gentle thrills (never truly scary).',
 };
 
 function buildStoryContext(chapters: Chapter[], bookTitle: string): string {
@@ -40,13 +51,15 @@ export async function generateChapter(
   chapters: Chapter[],
   userPrompt: string,
   apiKey: string,
+  genre?: Genre | null,
 ): Promise<GeneratedChapter> {
   const chapterNumber = chapters.length + 1;
   const storyContext = buildStoryContext(chapters, bookTitle);
+  const genreLine = genre ? `\nGenre: ${GENRE_PROMPTS[genre]}` : '';
 
   const prompt = `Write chapter ${chapterNumber} of a story for ages ${ageRange}.
 
-Target: ${WORD_TARGETS[ageRange]}
+Target: ${WORD_TARGETS[ageRange]}${genreLine}
 
 ${storyContext}
 
@@ -60,7 +73,7 @@ Return JSON:
 
 Rules:
 - Continue naturally from the previous chapter (if any)
-- Match the established tone, characters, and setting
+- Match the established tone, characters, and setting${genre ? '\n- Stay true to the genre style throughout' : ''}
 - End the chapter at a natural pause point that invites continuation
 - Age-appropriate language and themes
 - JSON only, no text outside the object`;
@@ -107,11 +120,13 @@ export async function generateDirections(
   ageRange: AgeRange,
   chapters: Chapter[],
   apiKey: string,
+  genre?: Genre | null,
 ): Promise<StoryDirection[]> {
   const chapterNumber = chapters.length + 1;
   const storyContext = buildStoryContext(chapters, bookTitle);
+  const genreLine = genre ? `\nGenre: ${GENRE_PROMPTS[genre]}` : '';
 
-  const prompt = `Suggest 3 different directions for chapter ${chapterNumber} of a story for ages ${ageRange}.
+  const prompt = `Suggest 3 different directions for chapter ${chapterNumber} of a story for ages ${ageRange}.${genreLine}
 
 ${storyContext}
 
@@ -125,7 +140,7 @@ Return JSON:
 }
 
 Rules:
-- Each direction should be meaningfully different (different events, tones, or character choices)
+- Each direction should be meaningfully different (different events, tones, or character choices)${genre ? '\n- All directions should fit within the genre' : ''}
 - Previews should excite the reader without being too long
 - Age-appropriate suggestions
 - JSON only, no text outside the object`;

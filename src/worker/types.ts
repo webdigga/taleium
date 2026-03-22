@@ -12,6 +12,8 @@ export type AgeRange = '3-5' | '6-8' | '9-12';
 
 export type Visibility = 'private' | 'public' | 'link';
 
+export type Genre = 'adventure' | 'fantasy' | 'mystery' | 'sci-fi' | 'fairy-tale' | 'animal' | 'funny' | 'spooky';
+
 export type SubscriptionStatus = 'free' | 'active' | 'past_due' | 'cancelled';
 
 export interface User {
@@ -37,6 +39,7 @@ export interface Book {
   title: string;
   description: string | null;
   age_range: AgeRange;
+  genre: Genre | null;
   visibility: Visibility;
   share_token: string | null;
   cover_image_url: string | null;

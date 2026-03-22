@@ -1,7 +1,7 @@
 import type { Env, User } from '../types';
 import { FREE_BOOK_LIMIT, FREE_CHAPTER_LIMIT } from '../types';
 import { getSessionUser, getSessionIdFromCookie } from '../services/auth';
-import { isValidAgeRange, isValidVisibility } from '../utils/validate';
+import { isValidAgeRange, isValidVisibility, isValidGenre } from '../utils/validate';
 import {
   createBook,
   getUserBooks,
@@ -43,16 +43,19 @@ export async function handleCreateBook(request: Request, env: Env, ctx: Executio
   const auth = await requireAuth(request, env);
   if (auth instanceof Response) return auth;
 
-  let body: { title?: string; ageRange?: string; description?: string; coverQuery?: string };
+  let body: { title?: string; ageRange?: string; description?: string; genre?: string; coverQuery?: string };
   try { body = await request.json(); } catch { return json({ error: 'Invalid JSON' }, 400); }
 
-  const { title, ageRange, description, coverQuery } = body;
+  const { title, ageRange, description, genre, coverQuery } = body;
 
   if (!title || typeof title !== 'string' || title.trim().length === 0) {
     return json({ error: 'Title is required' }, 400);
   }
   if (!ageRange || !isValidAgeRange(ageRange)) {
     return json({ error: 'Valid age range is required (3-5, 6-8, or 9-12)' }, 400);
+  }
+  if (genre && !isValidGenre(genre)) {
+    return json({ error: 'Invalid genre' }, 400);
   }
 
   // Free tier: book limit
@@ -63,7 +66,8 @@ export async function handleCreateBook(request: Request, env: Env, ctx: Executio
     }
   }
 
-  const book = await createBook(env, auth.id, title.trim(), ageRange, description?.trim());
+  const validGenre = genre && isValidGenre(genre) ? genre : undefined;
+  const book = await createBook(env, auth.id, title.trim(), ageRange, description?.trim(), validGenre);
 
   if (coverQuery && typeof coverQuery === 'string') {
     ctx.waitUntil(
@@ -169,6 +173,7 @@ export async function handleCreateChapter(request: Request, env: Env, bookId: st
       book.chapters,
       body.prompt.trim(),
       env.ANTHROPIC_API_KEY,
+      book.genre,
     );
 
     const chapter = await addChapter(env, bookId, generated.title, generated.content, body.prompt.trim());
@@ -201,6 +206,7 @@ export async function handleGetDirections(request: Request, env: Env, bookId: st
       book.age_range,
       book.chapters,
       env.ANTHROPIC_API_KEY,
+      book.genre,
     );
     return json({ directions });
   } catch (err) {
@@ -245,6 +251,7 @@ export async function handleCreateChapterFromDirection(
       book.chapters,
       prompt,
       env.ANTHROPIC_API_KEY,
+      book.genre,
     );
 
     const chapter = await addChapter(env, bookId, generated.title, generated.content, prompt);

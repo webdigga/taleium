@@ -72,6 +72,86 @@
   color: var(--color-muted);
 }
 
+/* ===== GENRE PICKER ===== */
+.genre-picker {
+  border: none;
+  margin-bottom: var(--space-lg);
+}
+
+.genre-picker-legend {
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: var(--color-heading);
+  margin-bottom: var(--space-sm);
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+}
+
+.premium-badge {
+  display: inline-block;
+  padding: 1px 8px;
+  border-radius: var(--radius-full);
+  font-size: 0.62rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  background: var(--color-secondary);
+  color: white;
+}
+
+.genre-picker-options {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.genre-option {
+  padding: 6px 14px;
+  border: 2px solid var(--color-border);
+  border-radius: var(--radius-full);
+  cursor: pointer;
+  transition: all var(--transition-base);
+  background: var(--color-surface);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.genre-option:hover {
+  border-color: var(--color-accent);
+}
+
+.genre-option.active {
+  border-color: var(--color-accent);
+  background: rgba(226, 114, 91, 0.06);
+}
+
+.genre-emoji {
+  font-size: 0.9rem;
+}
+
+.genre-label {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--color-heading);
+}
+
+/* ===== GENRE BADGE ===== */
+.badge-genre {
+  background: var(--color-surface-warm);
+  color: var(--color-text);
+  border: 1px solid var(--color-border);
+}
+
+.book-badges,
+.book-card-badges {
+  display: flex;
+  gap: var(--space-xs);
+  flex-wrap: wrap;
+  align-items: center;
+}
+
 /* ===== BOOK VIEW PAGE ===== */
 .book-view {
   padding: var(--space-2xl) var(--space-md);
