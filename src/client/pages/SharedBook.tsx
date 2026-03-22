@@ -15,18 +15,28 @@ interface Book {
   chapters: Chapter[];
 }
 
+interface CharacterMeta {
+  id: string;
+  name: string;
+  avatar_url: string | null;
+}
+
 export default function SharedBook() {
   const { token } = useParams<{ token: string }>();
   const [book, setBook] = useState<Book | null>(null);
+  const [bookCharacters, setBookCharacters] = useState<CharacterMeta[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     fetch(`/api/shared/${token}`)
       .then((res) => {
         if (!res.ok) throw new Error('Not found');
-        return res.json() as Promise<{ book: Book }>;
+        return res.json() as Promise<{ book: Book; characters?: CharacterMeta[] }>;
       })
-      .then((data) => setBook(data.book))
+      .then((data) => {
+        setBook(data.book);
+        setBookCharacters(data.characters || []);
+      })
       .catch(() => {})
       .finally(() => setLoading(false));
   }, [token]);
@@ -49,7 +59,7 @@ export default function SharedBook() {
 
   return (
     <main className="shared-page content-container">
-      <ChapterReader chapters={book.chapters} bookTitle={book.title} />
+      <ChapterReader chapters={book.chapters} bookTitle={book.title} characters={bookCharacters} />
     </main>
   );
 }

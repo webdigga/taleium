@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import ReadAloudControls from './ReadAloudControls';
 import UpgradePrompt from './UpgradePrompt';
+import StarringCast from './StarringCast';
 
 interface CharacterMeta {
   id: string;
@@ -71,6 +72,10 @@ export default function ChapterReader({ chapters, bookTitle, startIndex = 0, add
   return (
     <div className="chapter-reader">
       <h1 className="reader-title">{bookTitle}</h1>
+
+      {isFirst && characters.length > 0 && (
+        <StarringCast characters={characters} />
+      )}
 
       <div className="reader-chapter-nav-top">
         <span className="reader-page-indicator">
