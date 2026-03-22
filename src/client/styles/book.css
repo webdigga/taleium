@@ -1066,7 +1066,8 @@
 
 .char-picker-item.active {
   border-color: var(--color-accent);
-  background: rgba(226, 114, 91, 0.06);
+  background: rgba(226, 114, 91, 0.1);
+  box-shadow: 0 0 0 2px var(--color-accent-glow);
 }
 
 .char-picker-avatar {
@@ -1101,9 +1102,17 @@
 }
 
 .char-picker-check {
-  font-size: 0.72rem;
-  color: var(--color-accent);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: var(--color-accent);
+  color: white;
+  font-size: 0.6rem;
   font-weight: 700;
+  flex-shrink: 0;
 }
 
 /* ===== MOBILE ===== */
