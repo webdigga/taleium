@@ -19,11 +19,6 @@ interface ChapterReaderProps {
   characters?: CharacterMeta[];
 }
 
-function findChapterCharacters(content: string, characters: CharacterMeta[]): CharacterMeta[] {
-  const lower = content.toLowerCase();
-  return characters.filter((c) => lower.includes(c.name.toLowerCase()));
-}
-
 function renderContent(content: string, isFirstChapter: boolean) {
   const paragraphs = content.split('\n\n');
   return paragraphs.map((para, i) => (
@@ -73,10 +68,6 @@ export default function ChapterReader({ chapters, bookTitle, startIndex = 0, add
     <div className="chapter-reader">
       <h1 className="reader-title">{bookTitle}</h1>
 
-      {isFirst && characters.length > 0 && (
-        <StarringCast characters={characters} />
-      )}
-
       <div className="reader-chapter-nav-top">
         <span className="reader-page-indicator">
           Chapter {chapter.chapter_number} of {chapters.length}
@@ -87,29 +78,15 @@ export default function ChapterReader({ chapters, bookTitle, startIndex = 0, add
 
       <ChapterDivider />
 
+      {characters.length > 0 && (
+        <StarringCast characters={characters} />
+      )}
+
       <article className="reader-chapter">
         <h2 className="reader-chapter-heading">
           <span className="reader-chapter-number">Chapter {chapter.chapter_number}</span>
           {chapter.title}
         </h2>
-        {(() => {
-          const appearing = findChapterCharacters(chapter.content, characters);
-          if (appearing.length === 0) return null;
-          return (
-            <div className="reader-chapter-characters">
-              {appearing.map((c) => (
-                <span key={c.id} className="reader-char" title={c.name}>
-                  {c.avatar_url ? (
-                    <img src={c.avatar_url} alt={c.name} className="reader-char-img" />
-                  ) : (
-                    <span className="reader-char-initial">{c.name.charAt(0).toUpperCase()}</span>
-                  )}
-                  <span className="reader-char-name">{c.name}</span>
-                </span>
-              ))}
-            </div>
-          );
-        })()}
         <div className="reader-chapter-content">
           {renderContent(chapter.content, true)}
         </div>

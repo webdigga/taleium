@@ -307,12 +307,14 @@
 }
 
 .starring-label {
-  display: block;
-  font-family: var(--font-heading);
+  display: inline-block;
+  padding: 4px 14px;
+  border-radius: var(--radius-full);
+  background: var(--color-surface-warm);
   font-size: 0.78rem;
   font-weight: 600;
   text-transform: uppercase;
-  letter-spacing: 0.12em;
+  letter-spacing: 0.06em;
   color: var(--color-muted);
   margin-bottom: var(--space-md);
 }
@@ -320,7 +322,6 @@
 .starring-characters {
   display: flex;
   justify-content: center;
-  gap: var(--space-xl);
   flex-wrap: wrap;
 }
 
@@ -329,6 +330,7 @@
   flex-direction: column;
   align-items: center;
   gap: var(--space-xs);
+  width: 100px;
 }
 
 .starring-avatar {
@@ -358,52 +360,13 @@
 }
 
 .starring-name {
-  font-size: 0.78rem;
+  font-size: 0.72rem;
   font-weight: 600;
   color: var(--color-heading);
-}
-
-/* ===== READER CHARACTER AVATARS ===== */
-.reader-chapter-characters {
-  display: flex;
-  justify-content: center;
-  gap: var(--space-md);
-  margin-bottom: var(--space-xl);
-  padding-bottom: var(--space-md);
-  border-bottom: 1px solid var(--color-border);
-}
-
-.reader-char {
-  display: flex;
-  align-items: center;
-  gap: var(--space-xs);
-}
-
-.reader-char-img {
-  width: 32px;
-  height: 32px;
-  max-width: none;
-  border-radius: var(--radius-sm);
-  object-fit: cover;
-}
-
-.reader-char-initial {
-  width: 32px;
-  height: 32px;
-  border-radius: var(--radius-sm);
-  background: var(--color-surface-warm);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 0.75rem;
-  font-weight: 700;
-  color: var(--color-accent);
-}
-
-.reader-char-name {
-  font-size: 0.75rem;
-  font-weight: 600;
-  color: var(--color-muted);
+  text-align: center;
+  word-wrap: break-word;
+  max-width: 100%;
+  line-height: 1.3;
 }
 
 /* ===== BOOK SETTINGS ===== */
