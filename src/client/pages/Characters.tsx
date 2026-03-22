@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { useAuth } from '../context/AuthContext';
 import UpgradePrompt from '../components/UpgradePrompt';
 
@@ -11,13 +11,13 @@ interface Character {
   avatar_url: string | null;
 }
 
-function CharacterAvatar({ character }: { character: Character }) {
+function CharacterAvatar({ character, generating }: { character: Character; generating?: boolean }) {
   if (character.avatar_url) {
     return <img src={character.avatar_url} alt={character.name} className="char-avatar-img" />;
   }
   return (
-    <div className="char-avatar-placeholder">
-      <span>{character.name.charAt(0).toUpperCase()}</span>
+    <div className={`char-avatar-placeholder${generating ? ' generating' : ''}`}>
+      <span>{generating ? '...' : character.name.charAt(0).toUpperCase()}</span>
     </div>
   );
 }
@@ -35,8 +35,43 @@ export default function Characters() {
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
   const [regeneratingId, setRegeneratingId] = useState<string | null>(null);
+  const [pendingAvatarIds, setPendingAvatarIds] = useState<Set<string>>(new Set());
+  const pollTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   const isFree = user?.subscriptionStatus === 'free' || user?.subscriptionStatus === 'cancelled';
+
+  const pollForAvatars = useCallback(async (ids: Set<string>) => {
+    if (ids.size === 0) return;
+    try {
+      const res = await fetch('/api/characters', { credentials: 'include' });
+      const data = await res.json() as { characters: Character[] };
+      const updated = data.characters || [];
+      setCharacters(updated);
+
+      const stillPending = new Set<string>();
+      for (const id of ids) {
+        const c = updated.find((ch) => ch.id === id);
+        if (c && !c.avatar_url) stillPending.add(id);
+      }
+      setPendingAvatarIds(stillPending);
+      if (stillPending.size === 0 && pollTimerRef.current) {
+        clearInterval(pollTimerRef.current);
+        pollTimerRef.current = null;
+      }
+    } catch {}
+  }, []);
+
+  useEffect(() => {
+    if (pendingAvatarIds.size > 0 && !pollTimerRef.current) {
+      pollTimerRef.current = setInterval(() => pollForAvatars(pendingAvatarIds), 3000);
+    }
+    return () => {
+      if (pollTimerRef.current) {
+        clearInterval(pollTimerRef.current);
+        pollTimerRef.current = null;
+      }
+    };
+  }, [pendingAvatarIds, pollForAvatars]);
 
   useEffect(() => {
     if (isFree) { setLoading(false); return; }
@@ -99,6 +134,7 @@ export default function Characters() {
         if (!res.ok) throw new Error('Failed to create character');
         const data = await res.json() as { character: Character };
         setCharacters((prev) => [...prev, data.character]);
+        setPendingAvatarIds((prev) => new Set([...prev, data.character.id]));
       }
       resetForm();
     } catch (err) {
@@ -216,31 +252,38 @@ export default function Characters() {
 
       {!loading && characters.length > 0 && (
         <div className="characters-grid">
-          {characters.map((c) => (
-            <div key={c.id} className="char-card">
-              <div className="char-card-avatar">
-                <CharacterAvatar character={c} />
+          {characters.map((c) => {
+            const isPending = pendingAvatarIds.has(c.id);
+            const isRegenerating = regeneratingId === c.id;
+            return (
+              <div key={c.id} className="char-card">
+                <div className="char-card-avatar">
+                  <CharacterAvatar character={c} generating={isPending} />
+                </div>
+                <div className="char-card-info">
+                  <h3 className="char-card-name">{c.name}</h3>
+                  {c.role && <p className="char-card-role">{c.role}</p>}
+                  {c.appearance && <p className="char-card-detail">{c.appearance}</p>}
+                  {c.personality && <p className="char-card-detail">{c.personality}</p>}
+                </div>
+                <div className="char-card-actions">
+                  <button className="char-action-btn" onClick={() => startEdit(c)} title="Edit">Edit</button>
+                  {isPending ? (
+                    <span className="char-action-btn" style={{ cursor: 'default' }}>Generating avatar...</span>
+                  ) : (
+                    <button
+                      className="char-action-btn"
+                      onClick={() => handleRegenerate(c.id)}
+                      disabled={isRegenerating}
+                    >
+                      {isRegenerating ? 'Generating...' : c.avatar_url ? 'New avatar' : 'Generate avatar'}
+                    </button>
+                  )}
+                  <button className="char-action-btn char-action-delete" onClick={() => handleDelete(c.id)} title="Delete">Delete</button>
+                </div>
               </div>
-              <div className="char-card-info">
-                <h3 className="char-card-name">{c.name}</h3>
-                {c.role && <p className="char-card-role">{c.role}</p>}
-                {c.appearance && <p className="char-card-detail">{c.appearance}</p>}
-                {c.personality && <p className="char-card-detail">{c.personality}</p>}
-              </div>
-              <div className="char-card-actions">
-                <button className="char-action-btn" onClick={() => startEdit(c)} title="Edit">Edit</button>
-                <button
-                  className="char-action-btn"
-                  onClick={() => handleRegenerate(c.id)}
-                  disabled={regeneratingId === c.id}
-                  title="Regenerate avatar"
-                >
-                  {regeneratingId === c.id ? 'Generating...' : 'New avatar'}
-                </button>
-                <button className="char-action-btn char-action-delete" onClick={() => handleDelete(c.id)} title="Delete">Delete</button>
-              </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
       )}
     </main>

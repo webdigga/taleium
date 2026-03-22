@@ -820,6 +820,7 @@
 .char-avatar-img {
   width: 96px;
   height: 96px;
+  max-width: none;
   border-radius: 50%;
   object-fit: cover;
   border: 3px solid var(--color-border);
@@ -838,6 +839,15 @@
   font-size: 2rem;
   font-weight: 700;
   color: var(--color-accent);
+}
+
+.char-avatar-placeholder.generating {
+  animation: avatar-pulse 1.5s ease-in-out infinite;
+}
+
+@keyframes avatar-pulse {
+  0%, 100% { border-color: var(--color-border); }
+  50% { border-color: var(--color-accent); }
 }
 
 .char-card-info {
@@ -954,6 +964,8 @@
 .char-picker-avatar img {
   width: 100%;
   height: 100%;
+  max-width: none;
+  border-radius: 50%;
   object-fit: cover;
 }
 
