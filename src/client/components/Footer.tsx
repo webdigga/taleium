@@ -26,9 +26,17 @@ export default function Footer() {
             {!user && <Link to="/login">Sign in</Link>}
             <Link to="/browse">Community</Link>
           </div>
+          <div className="footer-links-col">
+            <h4 className="footer-links-heading">Legal</h4>
+            <Link to="/privacy">Privacy Policy</Link>
+            <Link to="/terms">Terms of Service</Link>
+          </div>
         </div>
         <div className="footer-bottom">
           <p className="footer-copyright">&copy; {new Date().getFullYear()} Taleium. All rights reserved.</p>
+          <p className="footer-company">
+            Taleium is a trading name of Kabooly Ltd. Registered in England &amp; Wales, company no. 15653819. ICO registration ZC086840.
+          </p>
         </div>
       </div>
     </footer>

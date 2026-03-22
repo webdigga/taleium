@@ -256,7 +256,7 @@ input, textarea {
 
 .footer-grid {
   display: grid;
-  grid-template-columns: 2fr 1fr 1fr;
+  grid-template-columns: 2fr 1fr 1fr 1fr;
   gap: var(--space-2xl);
   padding-bottom: var(--space-2xl);
   border-bottom: 1px solid rgba(255, 255, 255, 0.08);
@@ -316,6 +316,70 @@ input, textarea {
   font-size: 0.75rem;
   color: var(--color-muted-on-dark);
   opacity: 0.5;
+}
+
+.footer-company {
+  font-size: 0.7rem;
+  color: var(--color-muted-on-dark);
+  opacity: 0.35;
+  margin-top: var(--space-xs);
+}
+
+/* ===== LEGAL PAGES ===== */
+.legal-page {
+  max-width: var(--content-width);
+  padding-top: var(--space-3xl);
+  padding-bottom: var(--space-4xl);
+}
+
+.legal-title {
+  font-size: 2rem;
+  margin-bottom: var(--space-xs);
+}
+
+.legal-updated {
+  font-size: 0.85rem;
+  color: var(--color-muted);
+  margin-bottom: var(--space-2xl);
+}
+
+.legal-section {
+  margin-bottom: var(--space-2xl);
+}
+
+.legal-section h2 {
+  font-size: 1.2rem;
+  margin-bottom: var(--space-md);
+}
+
+.legal-section p {
+  margin-bottom: var(--space-md);
+  line-height: 1.7;
+}
+
+.legal-section ul {
+  margin-bottom: var(--space-md);
+  padding-left: var(--space-xl);
+}
+
+.legal-section li {
+  margin-bottom: var(--space-sm);
+  line-height: 1.7;
+}
+
+.legal-section a {
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.legal-nav {
+  padding-top: var(--space-xl);
+  border-top: 1px solid var(--color-border);
+}
+
+.legal-nav a {
+  font-weight: 600;
+  font-size: 0.9rem;
 }
 
 /* ===== HERO SECTION ===== */
