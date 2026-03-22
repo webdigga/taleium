@@ -28,6 +28,7 @@ export default function Header() {
           <div className="nav-links nav-links-auth">
             <Link to="/browse">Browse</Link>
             <Link to="/dashboard">My Stories</Link>
+            <Link to="/characters">Characters</Link>
             <Link to="/account">Account</Link>
             <button onClick={logout} className="nav-logout">Sign out</button>
           </div>

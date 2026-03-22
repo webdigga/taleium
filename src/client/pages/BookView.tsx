@@ -5,6 +5,7 @@ import ChapterCard from '../components/ChapterCard';
 import VisibilityPicker from '../components/VisibilityPicker';
 import UpgradePrompt from '../components/UpgradePrompt';
 import { GENRE_LABELS } from '../components/GenrePicker';
+import CharacterPicker from '../components/CharacterPicker';
 import { exportBookAsPdf } from '../utils/exportPdf';
 
 interface Chapter {
@@ -158,6 +159,14 @@ export default function BookView() {
         <div className="dashboard-empty">
           <p>Your story is ready! Add the first chapter to get started.</p>
         </div>
+      )}
+
+      {!isFree && (
+        <section className="book-settings">
+          <h2>Characters</h2>
+          <p className="book-settings-desc">Select characters to include in this story. They'll appear in new chapters automatically.</p>
+          <CharacterPicker bookId={id!} />
+        </section>
       )}
 
       <section className="book-settings">

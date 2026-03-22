@@ -1,4 +1,4 @@
-import type { AgeRange, Genre, GeneratedChapter, StoryDirection, Chapter } from '../types';
+import type { AgeRange, Genre, GeneratedChapter, StoryDirection, Chapter, Character } from '../types';
 import { sanitiseClaudeResponse } from '../utils/validate';
 
 const SYSTEM_PROMPT = `You are Taleium, a collaborative family story creator. You help parents and children write stories together, chapter by chapter. You write engaging, age-appropriate prose. Always use British English spelling (colour, favourite, realised, centre, etc.). Respond with valid JSON only - no markdown, no preamble.`;
@@ -19,6 +19,20 @@ const GENRE_PROMPTS: Record<Genre, string> = {
   'funny': 'Humorous and silly with jokes, wordplay, absurd situations, and laugh-out-loud moments.',
   'spooky': 'Mildly spooky and atmospheric with mysterious settings and gentle thrills (never truly scary).',
 };
+
+function buildCharacterContext(characters: Character[]): string {
+  if (characters.length === 0) return '';
+
+  const lines = characters.map((c) => {
+    const traits: string[] = [];
+    if (c.appearance) traits.push(`Appearance: ${c.appearance}`);
+    if (c.personality) traits.push(`Personality: ${c.personality}`);
+    if (c.role) traits.push(`Role: ${c.role}`);
+    return `- ${c.name}${traits.length > 0 ? ': ' + traits.join('. ') : ''}`;
+  });
+
+  return `\n\nCharacters in this story:\n${lines.join('\n')}\nEnsure these characters appear and stay consistent with their descriptions.`;
+}
 
 function buildStoryContext(chapters: Chapter[], bookTitle: string): string {
   if (chapters.length === 0) return 'This is the first chapter of the story.';
@@ -52,16 +66,18 @@ export async function generateChapter(
   userPrompt: string,
   apiKey: string,
   genre?: Genre | null,
+  characters?: Character[],
 ): Promise<GeneratedChapter> {
   const chapterNumber = chapters.length + 1;
   const storyContext = buildStoryContext(chapters, bookTitle);
   const genreLine = genre ? `\nGenre: ${GENRE_PROMPTS[genre]}` : '';
+  const characterContext = characters ? buildCharacterContext(characters) : '';
 
   const prompt = `Write chapter ${chapterNumber} of a story for ages ${ageRange}.
 
 Target: ${WORD_TARGETS[ageRange]}${genreLine}
 
-${storyContext}
+${storyContext}${characterContext}
 
 The reader's idea for this chapter: "${userPrompt}"
 
@@ -121,14 +137,16 @@ export async function generateDirections(
   chapters: Chapter[],
   apiKey: string,
   genre?: Genre | null,
+  characters?: Character[],
 ): Promise<StoryDirection[]> {
   const chapterNumber = chapters.length + 1;
   const storyContext = buildStoryContext(chapters, bookTitle);
   const genreLine = genre ? `\nGenre: ${GENRE_PROMPTS[genre]}` : '';
+  const characterContext = characters ? buildCharacterContext(characters) : '';
 
   const prompt = `Suggest 3 different directions for chapter ${chapterNumber} of a story for ages ${ageRange}.${genreLine}
 
-${storyContext}
+${storyContext}${characterContext}
 
 Return JSON:
 {

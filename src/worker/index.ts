@@ -21,6 +21,15 @@ import {
   handleBillingStatus,
   handleStripeWebhook,
 } from './routes/billing';
+import {
+  handleListCharacters,
+  handleCreateCharacter,
+  handleUpdateCharacter,
+  handleDeleteCharacter,
+  handleRegenerateAvatar,
+} from './routes/characters';
+import { setBookCharacters, getBookCharacters } from './services/db';
+import { getSessionUser, getSessionIdFromCookie } from './services/auth';
 
 const assetManifest = JSON.parse(manifestJSON as string);
 
@@ -103,6 +112,64 @@ export default {
       } else if (/^\/api\/books\/[^/]+\/chapters\/from-direction$/.test(path) && method === 'POST') {
         const bookId = path.split('/')[3];
         response = await handleCreateChapterFromDirection(request, env, bookId);
+
+      // Book-character linking
+      } else if (/^\/api\/books\/[^/]+\/characters$/.test(path) && method === 'GET') {
+        const bookId = path.split('/')[3];
+        const sessionId = getSessionIdFromCookie(request);
+        if (!sessionId) { response = new Response(JSON.stringify({ error: 'Not authenticated' }), { status: 401, headers: { 'Content-Type': 'application/json' } }); }
+        else {
+          const user = await getSessionUser(env, sessionId);
+          if (!user) { response = new Response(JSON.stringify({ error: 'Not authenticated' }), { status: 401, headers: { 'Content-Type': 'application/json' } }); }
+          else {
+            const characters = await getBookCharacters(env, bookId);
+            response = new Response(JSON.stringify({ characters }), { headers: { 'Content-Type': 'application/json' } });
+          }
+        }
+      } else if (/^\/api\/books\/[^/]+\/characters$/.test(path) && method === 'PUT') {
+        const bookId = path.split('/')[3];
+        const sessionId = getSessionIdFromCookie(request);
+        if (!sessionId) { response = new Response(JSON.stringify({ error: 'Not authenticated' }), { status: 401, headers: { 'Content-Type': 'application/json' } }); }
+        else {
+          const user = await getSessionUser(env, sessionId);
+          if (!user) { response = new Response(JSON.stringify({ error: 'Not authenticated' }), { status: 401, headers: { 'Content-Type': 'application/json' } }); }
+          else {
+            const body = await request.json() as { characterIds?: string[] };
+            await setBookCharacters(env, bookId, body.characterIds || []);
+            const characters = await getBookCharacters(env, bookId);
+            response = new Response(JSON.stringify({ characters }), { headers: { 'Content-Type': 'application/json' } });
+          }
+        }
+
+      // Character routes
+      } else if (path === '/api/characters' && method === 'GET') {
+        response = await handleListCharacters(request, env);
+      } else if (path === '/api/characters' && method === 'POST') {
+        response = await handleCreateCharacter(request, env, ctx);
+      } else if (/^\/api\/characters\/[^/]+$/.test(path) && method === 'PATCH') {
+        const charId = path.split('/')[3];
+        response = await handleUpdateCharacter(request, env, charId, ctx);
+      } else if (/^\/api\/characters\/[^/]+$/.test(path) && method === 'DELETE') {
+        const charId = path.split('/')[3];
+        response = await handleDeleteCharacter(request, env, charId);
+      } else if (/^\/api\/characters\/[^/]+\/regenerate-avatar$/.test(path) && method === 'POST') {
+        const charId = path.split('/')[3];
+        response = await handleRegenerateAvatar(request, env, charId);
+
+      // R2 asset serving (avatars)
+      } else if (/^\/api\/assets\//.test(path) && method === 'GET') {
+        const key = path.replace('/api/assets/', '');
+        const object = await env.ASSETS.get(key);
+        if (!object) {
+          response = new Response('Not found', { status: 404 });
+        } else {
+          response = new Response(object.body, {
+            headers: {
+              'Content-Type': object.httpMetadata?.contentType || 'image/png',
+              'Cache-Control': 'public, max-age=31536000, immutable',
+            },
+          });
+        }
 
       // Public routes
       } else if (path === '/api/public' && method === 'GET') {

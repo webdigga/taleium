@@ -16,5 +16,12 @@ binding = "DB"
 database_name = "taleium-meta"
 database_id = "93aeccbf-35ec-4a3b-bc2c-f6fb91bb6a90"
 
+[[r2_buckets]]
+binding = "ASSETS"
+bucket_name = "taleium-assets"
+
+[ai]
+binding = "AI"
+
 [site]
 bucket = "./dist"

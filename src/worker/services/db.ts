@@ -1,4 +1,4 @@
-import type { Env, Book, Chapter, BookWithChapters, AgeRange, Genre, Visibility, User, Subscription, SubscriptionStatus } from '../types';
+import type { Env, Book, Chapter, BookWithChapters, AgeRange, Genre, Visibility, User, Subscription, SubscriptionStatus, Character } from '../types';
 
 function generateShareToken(): string {
   const bytes = new Uint8Array(16);
@@ -285,4 +285,94 @@ export async function getPublicBook(env: Env, bookId: string): Promise<BookWithC
     .all<Chapter>();
 
   return { ...book, chapters: chapters.results };
+}
+
+// ===== CHARACTERS =====
+
+export async function createCharacter(
+  env: Env,
+  userId: string,
+  name: string,
+  appearance?: string,
+  personality?: string,
+  role?: string,
+  avatarUrl?: string,
+): Promise<Character> {
+  const id = crypto.randomUUID();
+  const now = new Date().toISOString();
+
+  await env.DB.prepare(
+    `INSERT INTO characters (id, user_id, name, appearance, personality, role, avatar_url, created_at, updated_at)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+  )
+    .bind(id, userId, name, appearance || null, personality || null, role || null, avatarUrl || null, now, now)
+    .run();
+
+  return {
+    id, user_id: userId, name,
+    appearance: appearance || null, personality: personality || null,
+    role: role || null, avatar_url: avatarUrl || null,
+    created_at: now, updated_at: now,
+  };
+}
+
+export async function getUserCharacters(env: Env, userId: string): Promise<Character[]> {
+  const result = await env.DB.prepare(
+    'SELECT * FROM characters WHERE user_id = ? ORDER BY name ASC',
+  ).bind(userId).all<Character>();
+  return result.results;
+}
+
+export async function getCharacter(env: Env, characterId: string): Promise<Character | null> {
+  return await env.DB.prepare('SELECT * FROM characters WHERE id = ?')
+    .bind(characterId).first<Character>();
+}
+
+export async function updateCharacter(
+  env: Env,
+  characterId: string,
+  updates: { name?: string; appearance?: string; personality?: string; role?: string; avatar_url?: string },
+): Promise<void> {
+  const sets: string[] = [];
+  const values: (string | null)[] = [];
+
+  if (updates.name !== undefined) { sets.push('name = ?'); values.push(updates.name); }
+  if (updates.appearance !== undefined) { sets.push('appearance = ?'); values.push(updates.appearance); }
+  if (updates.personality !== undefined) { sets.push('personality = ?'); values.push(updates.personality); }
+  if (updates.role !== undefined) { sets.push('role = ?'); values.push(updates.role); }
+  if (updates.avatar_url !== undefined) { sets.push('avatar_url = ?'); values.push(updates.avatar_url); }
+
+  if (sets.length === 0) return;
+
+  sets.push('updated_at = ?');
+  values.push(new Date().toISOString());
+  values.push(characterId);
+
+  await env.DB.prepare(`UPDATE characters SET ${sets.join(', ')} WHERE id = ?`)
+    .bind(...values).run();
+}
+
+export async function deleteCharacter(env: Env, characterId: string): Promise<void> {
+  await env.DB.prepare('DELETE FROM book_characters WHERE character_id = ?').bind(characterId).run();
+  await env.DB.prepare('DELETE FROM characters WHERE id = ?').bind(characterId).run();
+}
+
+// ===== BOOK-CHARACTER LINKS =====
+
+export async function setBookCharacters(env: Env, bookId: string, characterIds: string[]): Promise<void> {
+  await env.DB.prepare('DELETE FROM book_characters WHERE book_id = ?').bind(bookId).run();
+  for (const charId of characterIds) {
+    await env.DB.prepare('INSERT INTO book_characters (book_id, character_id) VALUES (?, ?)')
+      .bind(bookId, charId).run();
+  }
+}
+
+export async function getBookCharacters(env: Env, bookId: string): Promise<Character[]> {
+  const result = await env.DB.prepare(
+    `SELECT c.* FROM characters c
+     INNER JOIN book_characters bc ON bc.character_id = c.id
+     WHERE bc.book_id = ?
+     ORDER BY c.name ASC`,
+  ).bind(bookId).all<Character>();
+  return result.results;
 }

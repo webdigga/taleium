@@ -203,6 +203,7 @@ export default function Home() {
                 <li>Unlimited books</li>
                 <li>Unlimited chapters</li>
                 <li>Story genres</li>
+                <li>Character profiles with AI avatars</li>
                 <li>Download as PDF</li>
                 <li>All reading features</li>
                 <li>Share with anyone</li>

@@ -1,5 +1,7 @@
 export interface Env {
   DB: D1Database;
+  ASSETS: R2Bucket;
+  AI: Ai;
   ANTHROPIC_API_KEY: string;
   RESEND_API_KEY: string;
   STRIPE_SECRET_KEY: string;
@@ -72,6 +74,18 @@ export interface StoryDirection {
   id: string;
   summary: string;
   preview: string;
+}
+
+export interface Character {
+  id: string;
+  user_id: string;
+  name: string;
+  appearance: string | null;
+  personality: string | null;
+  role: string | null;
+  avatar_url: string | null;
+  created_at: string;
+  updated_at: string;
 }
 
 export interface ResolvedImage {

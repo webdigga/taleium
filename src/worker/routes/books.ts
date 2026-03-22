@@ -11,6 +11,7 @@ import {
   deleteBook,
   addChapter,
   ensureShareToken,
+  getBookCharacters,
 } from '../services/db';
 import { generateChapter, generateDirections } from '../services/claude';
 import { searchImage } from '../services/wikimedia';
@@ -167,6 +168,7 @@ export async function handleCreateChapter(request: Request, env: Env, bookId: st
   }
 
   try {
+    const bookCharacters = await getBookCharacters(env, bookId);
     const generated = await generateChapter(
       book.title,
       book.age_range,
@@ -174,6 +176,7 @@ export async function handleCreateChapter(request: Request, env: Env, bookId: st
       body.prompt.trim(),
       env.ANTHROPIC_API_KEY,
       book.genre,
+      bookCharacters,
     );
 
     const chapter = await addChapter(env, bookId, generated.title, generated.content, body.prompt.trim());
@@ -201,12 +204,14 @@ export async function handleGetDirections(request: Request, env: Env, bookId: st
   }
 
   try {
+    const bookCharacters = await getBookCharacters(env, bookId);
     const directions = await generateDirections(
       book.title,
       book.age_range,
       book.chapters,
       env.ANTHROPIC_API_KEY,
       book.genre,
+      bookCharacters,
     );
     return json({ directions });
   } catch (err) {
@@ -245,6 +250,7 @@ export async function handleCreateChapterFromDirection(
   const prompt = `${body.direction.summary}: ${body.direction.preview}`;
 
   try {
+    const bookCharacters = await getBookCharacters(env, bookId);
     const generated = await generateChapter(
       book.title,
       book.age_range,
@@ -252,6 +258,7 @@ export async function handleCreateChapterFromDirection(
       prompt,
       env.ANTHROPIC_API_KEY,
       book.genre,
+      bookCharacters,
     );
 
     const chapter = await addChapter(env, bookId, generated.title, generated.content, prompt);

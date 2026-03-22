@@ -18,6 +18,7 @@ import SharedBook from './pages/SharedBook';
 import Browse from './pages/Browse';
 import Account from './pages/Account';
 import NotFound from './pages/NotFound';
+import Characters from './pages/Characters';
 import Privacy from './pages/Privacy';
 import Terms from './pages/Terms';
 
@@ -45,6 +46,7 @@ export default function App() {
           <Route path="/books/:id/new-chapter" element={<AuthGuard><AddChapter /></AuthGuard>} />
           <Route path="/books/:id/read" element={<AuthGuard><ReadStory /></AuthGuard>} />
           <Route path="/account" element={<AuthGuard><Account /></AuthGuard>} />
+          <Route path="/characters" element={<AuthGuard><Characters /></AuthGuard>} />
           <Route path="/privacy" element={<Privacy />} />
           <Route path="/terms" element={<Terms />} />
           <Route path="*" element={<NotFound />} />
