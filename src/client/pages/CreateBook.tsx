@@ -12,7 +12,7 @@ export default function CreateBook() {
   const [ageRange, setAgeRange] = useState('6-8');
   const [genre, setGenre] = useState('');
   const [description, setDescription] = useState('');
-  const [coverQuery, setCoverQuery] = useState('');
+  const [coverPrompt, setCoverPrompt] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [bookCount, setBookCount] = useState<number | null>(null);
@@ -43,7 +43,7 @@ export default function CreateBook() {
           ageRange,
           genre: genre || undefined,
           description: description || undefined,
-          coverQuery: coverQuery || undefined,
+          coverPrompt: coverPrompt || undefined,
         }),
       });
       const data = await res.json() as { error?: string; code?: string; book: { id: string } };
@@ -102,14 +102,14 @@ export default function CreateBook() {
         )}
 
         <label className="auth-field">
-          <span>Cover image search (optional)</span>
+          <span>Describe your cover image (optional)</span>
           <input
             type="text"
-            value={coverQuery}
-            onChange={(e) => setCoverQuery(e.target.value)}
-            placeholder="e.g. castle in the clouds, space adventure"
+            value={coverPrompt}
+            onChange={(e) => setCoverPrompt(e.target.value)}
+            placeholder="e.g. a castle in the clouds, a spaceship flying through stars"
           />
-          <small className="field-hint">We&apos;ll find an image from Wikimedia Commons</small>
+          <small className="field-hint">We&apos;ll generate a cover illustration using AI. Leave blank to generate from your title.</small>
         </label>
 
         <button type="submit" className="auth-submit" disabled={loading || !title.trim()}>

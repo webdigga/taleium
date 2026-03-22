@@ -14,7 +14,7 @@ import {
   getBookCharacters,
 } from '../services/db';
 import { generateChapter, generateDirections } from '../services/claude';
-import { searchImage } from '../services/wikimedia';
+import { generateCover } from '../services/avatar';
 
 const json = (data: unknown, status = 200) =>
   new Response(JSON.stringify(data), {
@@ -44,10 +44,10 @@ export async function handleCreateBook(request: Request, env: Env, ctx: Executio
   const auth = await requireAuth(request, env);
   if (auth instanceof Response) return auth;
 
-  let body: { title?: string; ageRange?: string; description?: string; genre?: string; coverQuery?: string };
+  let body: { title?: string; ageRange?: string; description?: string; genre?: string; coverPrompt?: string };
   try { body = await request.json(); } catch { return json({ error: 'Invalid JSON' }, 400); }
 
-  const { title, ageRange, description, genre, coverQuery } = body;
+  const { title, ageRange, description, genre, coverPrompt } = body;
 
   if (!title || typeof title !== 'string' || title.trim().length === 0) {
     return json({ error: 'Title is required' }, 400);
@@ -70,23 +70,25 @@ export async function handleCreateBook(request: Request, env: Env, ctx: Executio
   const validGenre = genre && isValidGenre(genre) ? genre : undefined;
   const book = await createBook(env, auth.id, title.trim(), ageRange, description?.trim(), validGenre);
 
-  if (coverQuery && typeof coverQuery === 'string') {
-    ctx.waitUntil(
-      (async () => {
-        try {
-          const image = await searchImage(coverQuery);
-          if (image) {
-            await updateBook(env, book.id, {
-              cover_image_url: image.thumbnailUrl,
-              cover_image_attribution: image.attribution,
-            });
-          }
-        } catch (err) {
-          console.error('Cover image resolution failed:', err);
-        }
-      })(),
-    );
-  }
+  ctx.waitUntil(
+    (async () => {
+      try {
+        const cover = await generateCover(
+          env,
+          title.trim(),
+          description?.trim(),
+          validGenre,
+          coverPrompt?.trim() || null,
+        );
+        await updateBook(env, book.id, {
+          cover_image_url: cover.url,
+          cover_image_attribution: undefined,
+        });
+      } catch (err) {
+        console.error('Cover image generation failed:', err);
+      }
+    })(),
+  );
 
   return json({ book }, 201);
 }
