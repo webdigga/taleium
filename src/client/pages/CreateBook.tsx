@@ -174,7 +174,7 @@ export default function CreateBook() {
             onChange={(e) => setCoverPrompt(e.target.value)}
             placeholder="e.g. a castle in the clouds, a spaceship flying through stars"
           />
-          <small className="field-hint">We&apos;ll generate a cover illustration using AI. Leave blank to generate from your title.</small>
+          <small className="field-hint">We&apos;ll generate a cover illustration for you. Leave blank to generate from your title.</small>
         </label>
 
         <button type="submit" className="auth-submit" disabled={loading || !title.trim()}>

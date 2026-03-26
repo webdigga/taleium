@@ -27,10 +27,22 @@ function IconAgeRange() {
   );
 }
 
-function IconAI() {
+function IconCreative() {
   return (
     <svg width="40" height="40" viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg">
       <path d="M20 6L22 14L30 12L24 18L32 22L24 24L26 32L20 26L14 32L16 24L8 22L16 18L10 12L18 14L20 6Z" stroke="currentColor" strokeWidth="1.5" strokeLinejoin="round" fill="var(--color-secondary-light)" />
+    </svg>
+  );
+}
+
+function IconCharacter() {
+  return (
+    <svg width="40" height="40" viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <circle cx="20" cy="14" r="6" stroke="currentColor" strokeWidth="1.5" fill="var(--color-secondary-light)" />
+      <path d="M10 34C10 27.373 14.477 22 20 22C25.523 22 30 27.373 30 34" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" fill="none" />
+      <circle cx="31" cy="12" r="2" fill="var(--color-secondary)" opacity="0.6" />
+      <circle cx="9" cy="10" r="1.5" fill="var(--color-secondary)" opacity="0.4" />
+      <circle cx="33" cy="22" r="1.5" fill="var(--color-secondary)" opacity="0.5" />
     </svg>
   );
 }
@@ -116,7 +128,7 @@ export default function Home() {
             <div className="step-card">
               <span className="step-number">2</span>
               <h3 className="step-title">Write together</h3>
-              <p className="step-desc">Describe what happens next, or let AI suggest story directions. You choose - it writes.</p>
+              <p className="step-desc">Describe what happens next, or pick from suggested story directions. You choose, Taleium writes.</p>
             </div>
             <div className="step-card">
               <span className="step-number">3</span>
@@ -137,14 +149,19 @@ export default function Home() {
               <p>Stories adjust vocabulary and complexity for ages 3-5, 6-8, and 9-12. Every story is age-appropriate.</p>
             </div>
             <div className="feature-card">
-              <div className="feature-icon"><IconAI /></div>
-              <h3>AI-assisted, human-driven</h3>
-              <p>You guide the story. AI helps with the writing. The creative decisions are always yours and your child&apos;s.</p>
+              <div className="feature-icon"><IconCreative /></div>
+              <h3>Your story, your way</h3>
+              <p>You guide the story. Taleium helps with the writing. The creative decisions are always yours and your child&apos;s.</p>
+            </div>
+            <div className="feature-card">
+              <div className="feature-icon"><IconCharacter /></div>
+              <h3>Characters that stick around</h3>
+              <p>Create characters with names, personalities, and illustrated avatars. Add them to any story and they&apos;ll appear consistently in every chapter.</p>
             </div>
             <div className="feature-card">
               <div className="feature-icon"><IconReadAloud /></div>
               <h3>Read aloud built in</h3>
-              <p>Every story has a read-aloud mode with adjustable speed - perfect for bedtime or reading practice.</p>
+              <p>Every story has a read-aloud mode with adjustable speed, perfect for bedtime or reading practice.</p>
             </div>
           </div>
         </div>
@@ -203,12 +220,12 @@ export default function Home() {
                 <li>Unlimited books</li>
                 <li>Unlimited chapters</li>
                 <li>Story genres</li>
-                <li>Character profiles with AI avatars</li>
+                <li>Reusable characters in your stories</li>
                 <li>Download as PDF</li>
                 <li>All reading features</li>
                 <li>Share with anyone</li>
               </ul>
-              <Link to="/signup" className="btn-primary btn-lg">Start free, upgrade later</Link>
+              <Link to="/signup" className="btn-primary btn-lg">Start free</Link>
             </div>
           </div>
         </div>

@@ -171,7 +171,7 @@ export default function Characters() {
     return (
       <main className="characters-page page-container">
         <h1 className="characters-title">Characters</h1>
-        <UpgradePrompt message="Character profiles are a Premium feature. Upgrade to create reusable characters with AI-generated avatars." />
+        <UpgradePrompt message="Character profiles are a Premium feature. Upgrade to create reusable characters with custom avatars." />
       </main>
     );
   }
