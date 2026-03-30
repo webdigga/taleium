@@ -8,7 +8,7 @@ interface BillingStatus {
 }
 
 export default function Account() {
-  const { user } = useAuth();
+  const { user, logout } = useAuth();
   const [billing, setBilling] = useState<BillingStatus | null>(null);
   const [loading, setLoading] = useState(true);
   const [portalLoading, setPortalLoading] = useState(false);
@@ -108,6 +108,10 @@ export default function Account() {
             </button>
           </div>
         )}
+      </section>
+
+      <section className="account-section">
+        <button className="account-sign-out" onClick={logout}>Sign out</button>
       </section>
     </main>
   );

@@ -1257,6 +1257,24 @@ input, textarea {
   color: var(--color-muted);
 }
 
+.account-sign-out {
+  width: 100%;
+  padding: var(--space-sm) var(--space-md);
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--color-muted);
+  background: none;
+  border: 1.5px solid var(--color-border);
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  transition: color 0.15s, border-color 0.15s;
+}
+
+.account-sign-out:hover {
+  color: var(--color-text);
+  border-color: var(--color-text);
+}
+
 /* Plan cards */
 .plan-card {
   padding: var(--space-xl);
